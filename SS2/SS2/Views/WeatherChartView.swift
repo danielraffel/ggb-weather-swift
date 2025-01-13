@@ -27,17 +27,17 @@ struct WeatherChartView: View {
             if #available(iOS 16.0, *) {
                 VStack(alignment: .leading, spacing: 4) {
                     // Chart Title with scales
-                    HStack(spacing: 16) {
-                        Text("Temperature (°F)")
-                            .foregroundColor(.red)
-                        Text("Cloud Cover (%)")
-                            .foregroundColor(.blue)
-                        Text("Wind Speed (mph)")
-                            .foregroundColor(.green)
-                        Text("Precipitation (%)")
-                            .foregroundColor(.purple)
-                    }
-                    .font(.caption)
+                    // HStack(spacing: 16) {
+                    //     Text("Temperature (°F)")
+                    //         .foregroundColor(.red)
+                    //     Text("Cloud Cover (%)")
+                    //         .foregroundColor(.blue)
+                    //     Text("Wind Speed (mph)")
+                    //         .foregroundColor(.green)
+                    //     Text("Precipitation (%)")
+                    //         .foregroundColor(.purple)
+                    // }
+                    // .font(.caption)
                     
                     chartView
                 }
@@ -58,45 +58,33 @@ struct WeatherChartView: View {
             ForEach(filteredData) { data in
                 LineMark(
                     x: .value("Time", data.time),
-                    y: .value("Temperature", data.temperature)
+                    y: .value("Temperature (°F)", data.temperature)
                 )
-                .foregroundStyle(.red)
-                .interpolationMethod(.catmullRom)
-                .lineStyle(StrokeStyle(lineWidth: 1.5))
-                .foregroundStyle(by: .value("Metric", "Temperature"))
+                .foregroundStyle(by: .value("Metric", "Temperature (°F)"))
             }
             
             ForEach(filteredData) { data in
                 LineMark(
                     x: .value("Time", data.time),
-                    y: .value("Cloud Cover", data.cloudCover)
+                    y: .value("Cloud Cover (%)", data.cloudCover)
                 )
-                .foregroundStyle(.blue)
-                .interpolationMethod(.catmullRom)
-                .lineStyle(StrokeStyle(lineWidth: 1.5))
-                .foregroundStyle(by: .value("Metric", "Cloud Cover"))
+                .foregroundStyle(by: .value("Metric", "Cloud Cover (%)"))
             }
             
             ForEach(filteredData) { data in
                 LineMark(
                     x: .value("Time", data.time),
-                    y: .value("Wind Speed", data.windSpeed)
+                    y: .value("Wind Speed (mph)", data.windSpeed)
                 )
-                .foregroundStyle(.green)
-                .interpolationMethod(.catmullRom)
-                .lineStyle(StrokeStyle(lineWidth: 1.5))
-                .foregroundStyle(by: .value("Metric", "Wind Speed"))
+                .foregroundStyle(by: .value("Metric", "Wind Speed (mph)"))
             }
             
             ForEach(filteredData) { data in
                 LineMark(
                     x: .value("Time", data.time),
-                    y: .value("Precipitation", data.precipitationProbability)
+                    y: .value("Precipitation (%)", data.precipitationProbability)
                 )
-                .foregroundStyle(.purple)
-                .interpolationMethod(.catmullRom)
-                .lineStyle(StrokeStyle(lineWidth: 1.5))
-                .foregroundStyle(by: .value("Metric", "Precipitation"))
+                .foregroundStyle(by: .value("Metric", "Precipitation (%)"))
             }
         }
         .chartXAxis {
@@ -115,10 +103,10 @@ struct WeatherChartView: View {
         }
         .chartLegend(position: .top)
         .chartForegroundStyleScale([
-            "Temperature": .red,
-            "Cloud Cover": .blue,
-            "Wind Speed": .green,
-            "Precipitation": .purple
+            "Temperature (°F)": .red,
+            "Cloud Cover (%)": .blue,
+            "Wind Speed (mph)": .green,
+            "Precipitation (%)": .purple
         ])
         .frame(height: 300)
         .padding(.top, 8)
