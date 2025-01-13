@@ -1,7 +1,9 @@
 import SwiftUI
 import Charts
+import Inject
 
 struct WeatherChartView: View {
+    @ObserveInjection var inject
     let weatherData: [WeatherData]
     
     private let dateFormatter: DateFormatter = {
@@ -47,6 +49,7 @@ struct WeatherChartView: View {
         .padding()
         .background(Color(.systemGray6))
         .cornerRadius(12)
+        .enableInjection()
     }
     
     @available(iOS 16.0, *)

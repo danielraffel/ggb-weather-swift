@@ -1,6 +1,8 @@
 import SwiftUI
+import Inject
 
 struct BridgeImageView: View {
+    @ObserveInjection var inject
     @State private var imageData: Data?
     @State private var isLoading = true
     
@@ -32,6 +34,7 @@ struct BridgeImageView: View {
                 loadImage()
             }
         }
+        .enableInjection()
     }
     
     private func loadImage() {

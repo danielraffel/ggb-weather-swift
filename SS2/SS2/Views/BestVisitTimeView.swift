@@ -1,6 +1,8 @@
 import SwiftUI
+import Inject
 
 struct BestVisitTimeView: View {
+    @ObserveInjection var inject
     let bestTimes: [BestVisitTime]
     
     private let dateFormatter: DateFormatter = {
@@ -44,5 +46,6 @@ struct BestVisitTimeView: View {
         .padding()
         .background(Color(.secondarySystemBackground))
         .cornerRadius(12)
+        .enableInjection()
     }
 } 
