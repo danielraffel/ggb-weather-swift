@@ -19,11 +19,8 @@ struct CrossingCard: View {
         self.weather = weather
         self.onTimeChange = onTimeChange
         
-        // Initialize the hours and minutes from timeDiff
-        let hours = timeDiff.wrappedValue.hours
-        let minutes = timeDiff.wrappedValue.minutesPart
-        _selectedHours = State(initialValue: hours)
-        _selectedMinutes = State(initialValue: minutes)
+        _selectedHours = State(initialValue: timeDiff.wrappedValue.hours)
+        _selectedMinutes = State(initialValue: timeDiff.wrappedValue.minutesPart)
     }
     
     var body: some View {
@@ -78,6 +75,10 @@ struct CrossingCard: View {
         }
         .onChange(of: selectedMinutes) { _ in
             updateTimeDiff()
+        }
+        .onChange(of: timeDiff) { newValue in
+            selectedHours = newValue.hours
+            selectedMinutes = newValue.minutesPart
         }
     }
     

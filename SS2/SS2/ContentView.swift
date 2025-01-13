@@ -69,10 +69,16 @@ struct ContentView: View {
             presenter.loadData()
         }
         .onChange(of: scenePhase) { phase in
-            if phase == .active {
+            switch phase {
+            case .active:
+                presenter.loadSavedTimeDiffs()
                 Task {
                     await presenter.refresh()
                 }
+            case .inactive:
+                presenter.saveTimeDiffs()
+            default:
+                break
             }
         }
         .enableInjection()

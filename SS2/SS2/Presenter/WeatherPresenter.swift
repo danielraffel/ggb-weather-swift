@@ -4,6 +4,9 @@ import SwiftUI
 @MainActor
 class WeatherPresenter: ObservableObject {
     private let interactor: WeatherInteractorProtocol
+    private let defaults = UserDefaults.standard
+    private let firstCrossingTimeDiffKey = "firstCrossingTimeDiff"
+    private let secondCrossingTimeDiffKey = "secondCrossingTimeDiff"
     
     @Published var weatherData: [WeatherData] = []
     @Published var sunsetTime: String?
@@ -16,8 +19,12 @@ class WeatherPresenter: ObservableObject {
     @Published var bestVisitTimes: [BestVisitTime] = []
     @Published var isRefreshing = false
     
+    private var isLoading = false
+    
     init(interactor: WeatherInteractorProtocol) {
         self.interactor = interactor
+        print("Current UserDefaults for second crossing - hours: \(defaults.value(forKey: "\(secondCrossingTimeDiffKey)_hours") as? Int ?? -1), minutes: \(defaults.value(forKey: "\(secondCrossingTimeDiffKey)_minutes") as? Int ?? -1)")
+        loadSavedTimeDiffs()
     }
     
     func loadData() {
@@ -37,7 +44,7 @@ class WeatherPresenter: ObservableObject {
         
         // Update second crossing time based on first crossing time and time diff
         let secondMinutes = secondCrossingTimeDiff.minutes
-        secondCrossingTime = Calendar.current.date(byAdding: .minute, value: secondMinutes, to: firstCrossingTime) ?? firstCrossingTime
+        secondCrossingTime = Calendar.current.date(byAdding: .minute, value: secondMinutes, to: now) ?? firstCrossingTime
         
         // Update weather for both crossings
         firstCrossingWeather = getWeatherForTime(firstCrossingTime)
@@ -108,5 +115,33 @@ class WeatherPresenter: ObservableObject {
         calculateBestVisitTimes()
         updateCrossingWeather()
         isRefreshing = false
+    }
+    
+    func saveTimeDiffs() {
+        if isLoading { return }
+        
+        print("DEBUG: Saving time diffs")
+        defaults.set(firstCrossingTimeDiff.hours, forKey: "\(firstCrossingTimeDiffKey)_hours")
+        defaults.set(firstCrossingTimeDiff.minutesPart, forKey: "\(firstCrossingTimeDiffKey)_minutes")
+        defaults.set(secondCrossingTimeDiff.hours, forKey: "\(secondCrossingTimeDiffKey)_hours")
+        defaults.set(secondCrossingTimeDiff.minutesPart, forKey: "\(secondCrossingTimeDiffKey)_minutes")
+        defaults.synchronize()
+        
+        NSLog("Saved crossings - first: \(firstCrossingTimeDiff.hours)h \(firstCrossingTimeDiff.minutesPart)m, second: \(secondCrossingTimeDiff.hours)h \(secondCrossingTimeDiff.minutesPart)m")
+    }
+    
+    func loadSavedTimeDiffs() {
+        isLoading = true
+        if let firstHours = defaults.object(forKey: "\(firstCrossingTimeDiffKey)_hours") as? Int,
+           let firstMinutes = defaults.object(forKey: "\(firstCrossingTimeDiffKey)_minutes") as? Int {
+            firstCrossingTimeDiff = .combined(hours: firstHours, minutes: firstMinutes)
+        }
+        
+        if let secondHours = defaults.object(forKey: "\(secondCrossingTimeDiffKey)_hours") as? Int,
+           let secondMinutes = defaults.object(forKey: "\(secondCrossingTimeDiffKey)_minutes") as? Int {
+            secondCrossingTimeDiff = .combined(hours: secondHours, minutes: secondMinutes)
+        }
+        isLoading = false
+        updateCrossingWeather()
     }
 } 
