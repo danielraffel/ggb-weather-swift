@@ -20,33 +20,21 @@ struct WeatherChartView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 8) {
             Text("Today's Weather Forecast")
                 .font(.headline)
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
             
             if #available(iOS 16.0, *) {
-                VStack(alignment: .leading, spacing: 4) {
-                    // Chart Title with scales
-                    // HStack(spacing: 16) {
-                    //     Text("Temperature (°F)")
-                    //         .foregroundColor(.red)
-                    //     Text("Cloud Cover (%)")
-                    //         .foregroundColor(.blue)
-                    //     Text("Wind Speed (mph)")
-                    //         .foregroundColor(.green)
-                    //     Text("Precipitation (%)")
-                    //         .foregroundColor(.purple)
-                    // }
-                    // .font(.caption)
-                    
-                    chartView
-                }
+                chartView
+                    .padding(.bottom, 16)
             } else {
                 Text("Charts require iOS 16.0 or later")
                     .foregroundColor(.secondary)
+                    .padding(16)
             }
         }
-        .padding()
         .background(Color(.systemGray6))
         .cornerRadius(12)
         .enableInjection()
@@ -74,7 +62,7 @@ struct WeatherChartView: View {
             ForEach(filteredData) { data in
                 LineMark(
                     x: .value("Time", data.time),
-                    y: .value("Wind Speed (mph)", data.windSpeed)
+                    y: .value("Wind Speed (mph)", data.windSpeed * 5)
                 )
                 .foregroundStyle(by: .value("Metric", "Wind Speed (mph)"))
             }
@@ -90,17 +78,57 @@ struct WeatherChartView: View {
         .chartXAxis {
             AxisMarks(values: .stride(by: 3600)) { value in
                 if let date = value.as(Date.self) {
-                    AxisValueLabel {
-                        Text(dateFormatter.string(from: date))
-                            .font(.caption)
+                    let hour = Calendar.current.component(.hour, from: date)
+                    if hour >= 5 && hour <= 21 {
+                        AxisGridLine()
+                        AxisValueLabel {
+                            Text("\(hour):00")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
                     }
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
                 }
             }
         }
         .chartYAxis {
-            AxisMarks(preset: .automatic, position: .leading)
+            // Temperature axis (left)
+            AxisMarks(position: .leading, values: .stride(by: 25)) { value in
+                AxisGridLine()
+                AxisValueLabel {
+                    if let temp = value.as(Double.self) {
+                        Text("\(Int(temp))°F")
+                            .foregroundColor(.red)
+                            .padding(.trailing, -4)
+                    }
+                }
+            }
+            
+            // Percentage axis (right)
+            AxisMarks(position: .trailing, values: .automatic(desiredCount: 4)) { value in
+                AxisGridLine()
+                AxisValueLabel {
+                    if let val = value.as(Double.self) {
+                        HStack(spacing: 2) {
+                            Text("\(Int(val))")
+                            Text("%")
+                        }
+                        .foregroundColor(.secondary)
+                        .padding(.leading, -4)
+                    }
+                }
+                
+                if value.index == 2 {
+                    AxisValueLabel(anchor: .top) {
+                        Text("Cloud Cover & Precipitation")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .rotationEffect(.degrees(90))
+                            .offset(x: 30)
+                    }
+                }
+            }
         }
+        .chartYScale(domain: 0...100)
         .chartLegend(position: .top)
         .chartForegroundStyleScale([
             "Temperature (°F)": .red,
@@ -108,7 +136,9 @@ struct WeatherChartView: View {
             "Wind Speed (mph)": .green,
             "Precipitation (%)": .purple
         ])
-        .frame(height: 300)
-        .padding(.top, 8)
+        .frame(maxWidth: .infinity)
+        .frame(height: 320)
+        .padding(.horizontal, 8)
     }
+    
 } 
