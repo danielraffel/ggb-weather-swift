@@ -12,7 +12,10 @@ import Foundation
 
 struct ContentView: View {
     @ObserveInjection var inject
-    @StateObject private var presenter = WeatherPresenter(interactor: WeatherInteractor())
+    @StateObject private var presenter = WeatherPresenter(
+        interactor: WeatherInteractor(),
+        crossingTimeInteractor: CrossingTimeInteractor()
+    )
     @Environment(\.scenePhase) private var scenePhase
     
     var body: some View {
@@ -36,19 +39,23 @@ struct ContentView: View {
                     // First Crossing Card
                     CrossingCard(
                         title: "1st GGB Crossing",
-                        timeDiff: $presenter.firstCrossingTimeDiff,
-                        crossingTime: $presenter.firstCrossingTime,
+                        crossingTime: $presenter.firstCrossing,
                         weather: presenter.firstCrossingWeather,
-                        onTimeChange: { presenter.updateCrossingWeather() }
+                        baseDate: presenter.firstCrossingBaseDate,
+                        onTimeChange: { newTime in
+                            presenter.updateFirstCrossing(to: newTime)
+                        }
                     )
                     
                     // Second Crossing Card
                     CrossingCard(
                         title: "2nd GGB Crossing",
-                        timeDiff: $presenter.secondCrossingTimeDiff,
-                        crossingTime: $presenter.secondCrossingTime,
+                        crossingTime: $presenter.secondCrossing,
                         weather: presenter.secondCrossingWeather,
-                        onTimeChange: { presenter.updateCrossingWeather() }
+                        baseDate: presenter.firstCrossing.date,
+                        onTimeChange: { newTime in
+                            presenter.updateSecondCrossing(to: newTime)
+                        }
                     )
                     
                     // Best Visit Time Section
@@ -71,12 +78,12 @@ struct ContentView: View {
         .onChange(of: scenePhase) { phase in
             switch phase {
             case .active:
-                presenter.loadSavedTimeDiffs()
+                presenter.loadSavedCrossingTimes()
                 Task {
                     await presenter.refresh()
                 }
             case .inactive:
-                presenter.saveTimeDiffs()
+                presenter.saveCrossingTimes()
             default:
                 break
             }
