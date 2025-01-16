@@ -37,14 +37,32 @@ class WeatherPresenter: ObservableObject {
     }
     
     func updateCrossingWeather() {
-        // Update first crossing time based on time diff
         let now = Date()
-        let firstMinutes = firstCrossingTimeDiff.minutes
-        firstCrossingTime = Calendar.current.date(byAdding: .minute, value: firstMinutes, to: now) ?? now
+        let endOfDay = Calendar.current.date(bySettingHour: 23, minute: 59, second: 0, of: now) ?? now
         
-        // Update second crossing time based on first crossing time and time diff
-        let secondMinutes = secondCrossingTimeDiff.minutes
-        secondCrossingTime = Calendar.current.date(byAdding: .minute, value: secondMinutes, to: now) ?? firstCrossingTime
+        // Ensure first crossing time is valid
+        if firstCrossingTime < now {
+            firstCrossingTime = now
+            let diffComponents = Calendar.current.dateComponents([.hour, .minute], from: now, to: firstCrossingTime)
+            firstCrossingTimeDiff = .combined(hours: diffComponents.hour ?? 0, minutes: diffComponents.minute ?? 0)
+        }
+        if firstCrossingTime > endOfDay {
+            firstCrossingTime = endOfDay
+            let diffComponents = Calendar.current.dateComponents([.hour, .minute], from: now, to: firstCrossingTime)
+            firstCrossingTimeDiff = .combined(hours: diffComponents.hour ?? 0, minutes: diffComponents.minute ?? 0)
+        }
+        
+        // Ensure second crossing time is valid
+        if secondCrossingTime < firstCrossingTime {
+            secondCrossingTime = firstCrossingTime
+            let diffComponents = Calendar.current.dateComponents([.hour, .minute], from: firstCrossingTime, to: secondCrossingTime)
+            secondCrossingTimeDiff = .combined(hours: diffComponents.hour ?? 0, minutes: diffComponents.minute ?? 0)
+        }
+        if secondCrossingTime > endOfDay {
+            secondCrossingTime = endOfDay
+            let diffComponents = Calendar.current.dateComponents([.hour, .minute], from: firstCrossingTime, to: secondCrossingTime)
+            secondCrossingTimeDiff = .combined(hours: diffComponents.hour ?? 0, minutes: diffComponents.minute ?? 0)
+        }
         
         // Update weather for both crossings
         firstCrossingWeather = getWeatherForTime(firstCrossingTime)

@@ -67,6 +67,20 @@ struct CrossingCard: View {
                 
                 DatePicker("", selection: $crossingTime, displayedComponents: .hourAndMinute)
                     .labelsHidden()
+                    .onChange(of: crossingTime) { newTime in
+                        let now = Date()
+                        if newTime < now {
+                            crossingTime = now
+                        }
+                        
+                        // Calculate new time diff based on valid time
+                        let diffComponents = Calendar.current.dateComponents([.hour, .minute], from: now, to: crossingTime)
+                        let hours = max(0, diffComponents.hour ?? 0)
+                        let minutes = max(0, diffComponents.minute ?? 0)
+                        timeDiff = .combined(hours: hours, minutes: minutes)
+                        
+                        debounceTimeChange()
+                    }
             }
             
             if let weather = weather {
