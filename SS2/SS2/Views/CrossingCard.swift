@@ -64,7 +64,7 @@ struct CrossingCard: View {
                     }
                 }
                 .pickerStyle(.menu)
-                .frame(width: 80)
+                .frame(width: 85)
                 .padding(.trailing, -18)
                 
                 Text("at")
