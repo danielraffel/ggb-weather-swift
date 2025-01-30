@@ -38,33 +38,38 @@ final class CrossingTimeInteractor: CrossingTimeInteractorProtocol {
     }
     
     func calculateValidCrossingTimes(firstDiff: TimeDiff, secondDiff: TimeDiff) -> (first: CrossingTime, second: CrossingTime) {
-        let now = Date()
         let calendar = Calendar.current
-        let endOfDay = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: now) ?? now
+        let now = Date()
+        // Truncate to current minute by getting components
+        let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: now)
+        let roundedNow = calendar.date(from: components) ?? now
+        let endOfDay = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: roundedNow) ?? roundedNow
         
-        // Calculate first crossing
-        var firstDate = firstDiff.applying(to: now)
-        firstDate = clampDate(firstDate, min: now, max: endOfDay)
-        let validFirstDiff = TimeDiff.from(date: firstDate, relativeTo: now)
-        let firstCrossing = CrossingTime(date: firstDate, timeDiff: validFirstDiff)
+        // Calculate first crossing using rounded base time
+        let firstDate = firstDiff.applying(to: roundedNow)
+        let validFirstDate = clampDate(firstDate, min: roundedNow, max: endOfDay)
+        let firstCrossing = CrossingTime(date: validFirstDate, timeDiff: firstDiff)
         
         // Calculate second crossing based on first crossing
-        var secondDate = secondDiff.applying(to: firstDate)
-        secondDate = clampDate(secondDate, min: firstDate, max: endOfDay)
-        let validSecondDiff = TimeDiff.from(date: secondDate, relativeTo: firstDate)
-        let secondCrossing = CrossingTime(date: secondDate, timeDiff: validSecondDiff)
+        let secondDate = secondDiff.applying(to: validFirstDate)
+        let validSecondDate = clampDate(secondDate, min: validFirstDate, max: endOfDay)
+        let secondCrossing = CrossingTime(date: validSecondDate, timeDiff: secondDiff)
         
         return (first: firstCrossing, second: secondCrossing)
     }
     
     func updateFirstCrossing(to date: Date) -> (first: CrossingTime, second: CrossingTime) {
-        let now = Date()
         let calendar = Calendar.current
+        let now = Date()
+        // Truncate to current minute by getting components
+        let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: now)
+        let roundedNow = calendar.date(from: components) ?? now
         let endOfDay = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: now) ?? now
         
         // Clamp the first crossing date
-        let validFirstDate = clampDate(date, min: now, max: endOfDay)
-        let firstDiff = TimeDiff.from(date: validFirstDate, relativeTo: now)
+        let validFirstDate = clampDate(date, min: roundedNow, max: endOfDay)
+        // Calculate time diff from rounded now to preserve exact minutes
+        let firstDiff = TimeDiff.from(date: validFirstDate, relativeTo: roundedNow)
         let firstCrossing = CrossingTime(date: validFirstDate, timeDiff: firstDiff)
         
         // Load the saved second crossing diff and recalculate based on new first crossing

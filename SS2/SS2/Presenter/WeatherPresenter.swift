@@ -37,6 +37,7 @@ class WeatherPresenter: ObservableObject {
     
     func updateFirstCrossing(to date: Date) {
         let crossings = crossingTimeInteractor.updateFirstCrossing(to: date)
+        print("Updated First Crossing - New Date: \(crossings.first.date), Time Diff: \(crossings.first.timeDiff)")
         firstCrossing = crossings.first
         secondCrossing = crossings.second
         updateCrossingWeather()
@@ -44,6 +45,7 @@ class WeatherPresenter: ObservableObject {
     
     func updateSecondCrossing(to date: Date) {
         secondCrossing = crossingTimeInteractor.updateSecondCrossing(to: date, relativeTo: firstCrossing)
+        print("Updated Second Crossing - New Date: \(secondCrossing.date), Time Diff: \(secondCrossing.timeDiff)")
         updateCrossingWeather()
     }
     
@@ -120,18 +122,28 @@ class WeatherPresenter: ObservableObject {
     
     func loadSavedCrossingTimes() {
         let (firstDiff, secondDiff) = crossingTimeInteractor.loadSavedTimeDiffs()
+        // These print statements will log the loaded time differences and the computed crossing times whenever loadSavedCrossingTimes() is called. This will help you identify if the values are being loaded correctly from UserDefaults and if the calculations are as expected.
+        // print("Loaded Time Diffs - First: \(firstDiff), Second: \(secondDiff)")
         let crossings = crossingTimeInteractor.calculateValidCrossingTimes(firstDiff: firstDiff, secondDiff: secondDiff)
         firstCrossing = crossings.first
         secondCrossing = crossings.second
+        // print("Crossing Times - First: \(firstCrossing.date), Second: \(secondCrossing.date)")
         updateCrossingWeather()
     }
     
     func saveCrossingTimes() {
-        crossingTimeInteractor.saveTimeDiffs(first: firstCrossing.timeDiff, second: secondCrossing.timeDiff)
+        let firstTimeDiff = firstCrossing.timeDiff
+        let secondTimeDiff = secondCrossing.timeDiff
+        crossingTimeInteractor.saveTimeDiffs(first: firstTimeDiff, second: secondTimeDiff)
     }
     
     // Get the current base date for first crossing calculations
     var firstCrossingBaseDate: Date {
-        Date()  // Always use current time as base for first crossing
+        let calendar = Calendar.current
+        let now = Date()
+        // Round down to current minute by explicitly setting seconds to 0
+        let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: now)
+        let roundedDate = calendar.date(from: components)?.addingTimeInterval(0) ?? now
+        return roundedDate
     }
 } 

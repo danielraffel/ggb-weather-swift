@@ -33,46 +33,50 @@ struct CrossingCard: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 12) { // spacing between the card and the text
             Text(title)
                 .font(.headline)
             
-            HStack(spacing: 0) {
+            HStack(spacing: 0) {  // Main spacing between all elements - adjust this for overall gaps
                 Text("in")
                     .foregroundColor(.secondary)
-                    .padding(.trailing, -15)
+                    .padding(.trailing, -20)  // Space between "in" and hours - adjust this number
                 
                 Picker("Hours", selection: $selectedHours) {
                     ForEach(0..<24) { hour in
                         Text("\(hour)h")
-                            .fixedSize()
-                            .frame(width: 45, alignment: .leading)
+                            .fixedSize()  // Prevents "h" from wrapping
+                            .frame(width: 45, alignment: .leading)  // Width of hour picker
                             .tag(hour)
                     }
                 }
                 .pickerStyle(.menu)
-                .frame(width: 80)
-                .padding(.trailing, -32)
+                .frame(width: 100)  // Width of hour picker
+                .padding(.trailing, -35)  // Space between hour picker and minutes in this case negative
                 
                 Picker("Minutes", selection: $selectedMinutes) {
                     ForEach(0..<60) { minute in
                         Text("\(minute)m")
                             .monospacedDigit()
-                            .fixedSize()
-                            .frame(width: 60, alignment: .leading)
+                            .fixedSize()  // Prevents "m" from wrapping
+                            .frame(width: 60, alignment: .leading)  // Width of minute picker
                             .tag(minute)
                     }
                 }
                 .pickerStyle(.menu)
-                .frame(width: 85)
-                .padding(.trailing, -18)
+                .frame(width: 85)  // Width of minute picker
+                .padding(.trailing, -10)  // Space between minute picker and "at"
                 
                 Text("at")
                     .foregroundColor(.secondary)
-                    .padding(.horizontal, 10)
-                    .padding(.trailing, -2)
+                    .padding(.horizontal, 10)  // Space between "at" and date picker
+                    .padding(.trailing, -0)  // Space between "at" and date picker
                 
-                DatePicker("", selection: $selectedTime, displayedComponents: .hourAndMinute)
+                DatePicker("", 
+                    selection: $selectedTime,
+                    in: baseDate...Calendar.current.date(bySettingHour: 23, minute: 59, second: 59, of: baseDate)!,
+                    displayedComponents: .hourAndMinute
+                )
                     .labelsHidden()
             }
             
@@ -89,16 +93,16 @@ struct CrossingCard: View {
         .padding()
         .background(Color(.secondarySystemBackground))
         .cornerRadius(12)
-        .onChange(of: selectedHours) { _ in
+        .onChange(of: selectedHours) { oldValue, newValue in
             updateFromDropdowns()
         }
-        .onChange(of: selectedMinutes) { _ in
+        .onChange(of: selectedMinutes) { oldValue, newValue in
             updateFromDropdowns()
         }
-        .onChange(of: selectedTime) { newTime in
-            updateFromTimePicker(newTime)
+        .onChange(of: selectedTime) { oldValue, newValue in
+            updateFromTimePicker(newValue)
         }
-        .onChange(of: crossingTime) { newValue in
+        .onChange(of: crossingTime) { oldValue, newValue in
             // Only update UI if the values actually changed
             if abs(newValue.date.timeIntervalSince(selectedTime)) > 1 {
                 selectedTime = newValue.date
@@ -117,23 +121,43 @@ struct CrossingCard: View {
         let timeDiff = TimeDiff.combined(hours: selectedHours, minutes: selectedMinutes)
         let newDate = timeDiff.applying(to: baseDate)
         
-        // Only update if the date would actually change
+        // Only update if the date would actually change significantly
         if abs(newDate.timeIntervalSince(selectedTime)) > 1 {
-            selectedTime = newDate
-            debounceTimeChange(newDate)
+            // Prevent feedback loop by checking if new time would be valid
+            if newDate >= baseDate {
+                selectedTime = newDate
+                debounceTimeChange(newDate)
+            } else {
+                // Reset to current values if invalid
+                let calendar = Calendar.current
+                let components = calendar.dateComponents([.hour, .minute], from: baseDate, to: selectedTime)
+                selectedHours = components.hour ?? 0
+                selectedMinutes = components.minute ?? 0
+            }
         }
     }
     
     private func updateFromTimePicker(_ newTime: Date) {
         // When time picker changes, calculate time diff from base date
         let calendar = Calendar.current
-        let components = calendar.dateComponents([.hour, .minute], from: baseDate, to: newTime)
         
-        // Update dropdowns to reflect new time diff
-        selectedHours = components.hour ?? 0
-        selectedMinutes = components.minute ?? 0
-        
-        debounceTimeChange(newTime)
+        // Only update if the time would be valid
+        if newTime >= baseDate {
+            let components = calendar.dateComponents([.hour, .minute], from: baseDate, to: newTime)
+            
+            // Only update dropdowns if values would actually change
+            let newHours = components.hour ?? 0
+            let newMinutes = components.minute ?? 0
+            if newHours != selectedHours || newMinutes != selectedMinutes {
+                selectedHours = newHours
+                selectedMinutes = newMinutes
+            }
+            
+            debounceTimeChange(newTime)
+        } else {
+            // Reset time picker to previous valid time
+            selectedTime = max(baseDate, selectedTime)
+        }
     }
     
     private func debounceTimeChange(_ newTime: Date) {

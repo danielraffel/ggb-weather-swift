@@ -75,8 +75,8 @@ struct ContentView: View {
         .onAppear {
             presenter.loadData()
         }
-        .onChange(of: scenePhase) { phase in
-            switch phase {
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            switch newPhase {
             case .active:
                 presenter.loadSavedCrossingTimes()
                 Task {

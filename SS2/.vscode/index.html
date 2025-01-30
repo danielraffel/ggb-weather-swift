@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="Plan your Golden Gate Bridge crossing with real-time weather updates and a customizable forecast for cyclists and runners. Get the best times to cross today, view live bridge images, check current and future conditions, and dress appropriately for your journey." />
+    <title>Best Time to Cross the Golden Gate Bridge Today</title>
+    <!-- Primary PNG Favicon (128x128, with cache bypass) -->
+    <link rel="icon" type="image/png" sizes="128x128" href="https://s3.amazonaws.com/pix.iemoji.com/images/emoji/apple/ios-12/128/man-biking.png?v=1">
+    <!-- SVG Favicon for Modern Browsers -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚴‍♂️</text></svg">    
+    <!-- Apple Touch Icons (with cache bypass) -->
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/danielraffel/ggb/main/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://s3.amazonaws.com/pix.iemoji.com/images/emoji/apple/ios-12/256/man-biking.png?v=1">
+    <link rel="apple-touch-icon" sizes="256x256" href="https://s3.amazonaws.com/pix.iemoji.com/images/emoji/apple/ios-12/256/man-biking.png?v=1">
+    <link rel="apple-touch-icon" sizes="128x128" href="https://s3.amazonaws.com/pix.iemoji.com/images/emoji/apple/ios-12/128/man-biking.png?v=1">
+    <!-- iOS Web App Configuration -->
+    <meta name="apple-mobile-web-app-title" content="Best Time for Athletes to Cross the Golden Gate Bridge Today">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <!-- External CSS and JS libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+    <style>
+        /* Animation for blinking effect */
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-blink {
+            animation: blink 0.5s ease-in-out 3;
+        }
+
+        /* Night mode styles */
+        body.night-mode {
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+        }
+
+        /* Adjust background color for white elements in night mode */
+        body.night-mode .bg-white {
+            background-color: #2a2a2a;
+        }
+
+        /* Style form inputs and selects for night mode */
+        body.night-mode input,
+        body.night-mode select {
+            background-color: #3a3a3a;
+            color: #f0f0f0;
+            border-color: #4a4a4a;
+        }
+
+        /* Adjust shadow for better visibility in night mode */
+        body.night-mode .shadow-md {
+            box-shadow: 0 4px 6px -1px rgba(255, 255, 255, 0.1), 0 2px 4px -1px rgba(255, 255, 255, 0.06);
+        }
+
+        /* Container for the image, controls aspect ratio and cropping */
+        .image-container {
+            position: relative;
+            width: 100%;
+            padding-top: 63.75%; /* 75% * 0.85 to crop 15% of height */
+            overflow: hidden;
+        }
+
+        /* Styles for the image itself */
+        #ggb-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 117.65%; /* 100 / 0.85 to compensate for cropping */
+            object-fit: cover; /* Ensures image fills container without distortion */
+            object-position: center top; /* Aligns image to top, cropping from bottom */
+            transition: opacity 0.3s ease-in-out;
+        }
+        #ggb-image.loading {
+            opacity: 0.5;
+        }
+
+        @media (max-width: 640px) {
+            #mobile-legend {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 0.5rem;
+                font-size: 0.65rem;
+            }
+
+            #mobile-legend .flex {
+                align-items: center;
+                margin-right: 0.25rem;
+            }
+
+            #mobile-legend .rounded-full {
+                width: 0.6rem;
+                height: 0.6rem;
+                margin-right: 0.15rem;
+            }
+
+            #best-visit-time .flex {
+                flex-direction: row;
+            }
+            #best-visit-time .w-full {
+                width: 50%;
+            }
+            #best-visit-time h3 {
+                font-size: 1rem;
+            }
+            #best-visit-time ul {
+                font-size: 0.875rem;
+            }
+
+            .chart-wrapper {
+                max-height: 250px !important;
+            }
+        }
+    </style>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-4 sm:py-8">
+        <h1 class="text-3xl font-bold mb-6 text-center hidden sm:block">Golden Gate Bridge Live</h1>
+        
+        <!-- Live image feed of Golden Gate Bridge -->
+        <div class="mb-2">
+            <!-- Container for the image with rounded corners and hidden overflow -->
+            <div class="image-container rounded-lg overflow-hidden">
+                <img id="ggb-image" class="w-full h-full object-cover" src="https://raw.githubusercontent.com/danielraffel/ggb/main/ggb.screenshot.png" alt="Golden Gate Bridge">
+            </div>
+            <div id="sunset-info" class="text-sm mt-2 text-center"></div>
+        </div>
+
+        <!-- First crossing information -->
+        <div id="first-crossing" class="bg-white shadow-md rounded-lg p-6 mb-4 sm:mb-6">
+            <h2 class="text-1xl font-semibold mb-2 sm:mb-4">1st GGB Crossing</h2>
+            <div class="flex items-center space-x-2 sm:space-x-4 mb-2 sm:mb-4">
+                <span>in</span>
+                <!-- Desktop view for time difference input -->
+                <input type="text" id="first-crossing-time-diff" class="border rounded px-2 py-1 w-20 hidden sm:inline">
+                <!-- Mobile view for time difference input -->
+                <div class="flex space-x-1 sm:hidden">
+                    <select id="first-crossing-hours" class="border rounded px-1 py-1 w-16">
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                    <select id="first-crossing-minutes" class="border rounded px-1 py-1 w-[4.5rem]">
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                </div>
+                <span>at</span>
+                <div class="relative">
+                    <input type="time" id="first-crossing-time" class="border rounded px-2 py-1">
+                    <div id="first-crossing-time-blink" class="absolute inset-0 bg-yellow-200 opacity-0 pointer-events-none"></div>
+                </div>
+            </div>
+            <div id="first-crossing-weather" class="text-lg"></div>
+        </div>
+
+        <!-- Second crossing information -->
+        <div id="second-crossing" class="bg-white shadow-md rounded-lg p-6">
+            <h2 class="text-1xl font-semibold mb-2 sm:mb-4">2nd GGB Crossing</h2>
+            <div class="flex items-center space-x-2 sm:space-x-4 mb-2 sm:mb-4">
+                <!-- Desktop view for time difference input -->
+                <input type="text" id="second-crossing-time-diff" class="border rounded px-2 py-1 w-20 hidden sm:inline">
+                <!-- Mobile view for time difference input -->
+                <div class="flex space-x-1 sm:hidden">
+                    <select id="second-crossing-hours" class="border rounded px-1 py-1 w-16">
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                    <select id="second-crossing-minutes" class="border rounded px-1 py-1 w-[4.5rem]">
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                </div>
+                <span>later at</span>
+                <input type="time" id="second-crossing-time" class="border rounded px-2 py-1">
+            </div>
+            <div id="second-crossing-weather" class="text-lg"></div>
+        </div>
+
+        <!-- Best Visit Time section -->
+        <div id="best-visit-time" class="bg-white shadow-md rounded-lg p-6 mt-4 sm:mt-6">
+            <div class="flex flex-col sm:flex-row justify-between">
+                <div class="w-full sm:w-1/2 pr-0 sm:pr-2 mb-4 sm:mb-0">
+                    <h3 class="text-lg font-semibold mb-2 text-yellow-500">
+                        🥇 <span class="sm:hidden">Best time</span><span class="hidden sm:inline">Best time to visit</span>
+                    </h3>
+                    <ul id="best-time-info-1" class="text-base list-none p-0"></ul>
+                </div>
+                <div class="w-full sm:w-1/2 pl-0 sm:pl-2">
+                    <h3 class="text-lg font-semibold mb-2 text-gray-500">
+                        🥈 <span class="sm:hidden">Second best</span><span class="hidden sm:inline">Second best time</span>
+                    </h3>
+                    <ul id="best-time-info-2" class="text-base list-none p-0"></ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weather Chart container -->
+        <div class="chart-container bg-white shadow-md rounded-lg p-6 mt-4 sm:mt-6">
+            <h2 class="text-1xl font-semibold mb-4">Today's Weather Forecast</h2>
+            <!-- Mobile legend -->
+            <div id="mobile-legend" class="md:hidden flex flex-wrap justify-around text-xs mb-2">
+                <div class="flex items-center mr-2 mb-1">
+                    <span class="w-3 h-3 rounded-full bg-red-400 mr-1"></span>
+                    <span>Temp (°F)</span>
+                </div>
+                <div class="flex items-center mr-2 mb-1">
+                    <span class="w-3 h-3 rounded-full bg-blue-400 mr-1"></span>
+                    <span>Cloud (%)</span>
+                </div>
+                <div class="flex items-center mr-2 mb-1">
+                    <span class="w-3 h-3 rounded-full bg-green-400 mr-1"></span>
+                    <span>Wind (MPH)</span>
+                </div>
+                <div class="flex items-center mb-1">
+                    <span class="w-3 h-3 rounded-full bg-purple-400 mr-1"></span>
+                    <span>Precip (%)</span>
+                </div>
+            </div>
+            <div class="chart-wrapper" style="position: relative; height: 40vh; max-height: 300px;">
+                <canvas id="weatherChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+    
+    <div>
+        <div class="text-sm sm:mt-0 mt-2 sm:mb-6 mb-0 text-center">
+            <a href="https://github.com/danielraffel/ggb" target="_blank" style="text-decoration: underline;">About this Site</a>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script>
+        // Helper functions
+        
+        // Get and set functions for localStorage
+        function getFirstCrossingTimeDiff() {
+            return localStorage.getItem('firstCrossingTimeDiff') || '0h0m';
+        }
+
+        function setFirstCrossingTimeDiff(value) {
+            localStorage.setItem('firstCrossingTimeDiff', value);
+        }
+
+        function getSecondCrossingTimeDiff() {
+            return localStorage.getItem('secondCrossingTimeDiff') || '2h0m';
+        }
+
+        function setSecondCrossingTimeDiff(value) {
+            localStorage.setItem('secondCrossingTimeDiff', value);
+        }
+
+        // Normalize time difference to standard format
+        function normalizeTimeDiff(value) {
+            if (/^(0|0[hm]|0h0m)$/.test(value)) {
+                return '0h0m';
+            }
+            const match = value.match(/^(\d+)(?:h|m)?(\d+)?m?$/);
+            if (match) {
+                const hours = parseInt(match[1]);
+                const minutes = match[2] ? parseInt(match[2]) : 0;
+                if (match[0].includes('h') || (!match[0].includes('h') && !match[0].includes('m') && hours >= 60)) {
+                    return `${hours}h${minutes}m`;
+                } else {
+                    return `${hours}m`;
+                }
+            }
+            return value;
+        }
+
+        // Parse time difference string to minutes
+        function parseTimeDiff(timeDiff) {
+            if (timeDiff === '0' || timeDiff === '0h' || timeDiff === '0m' || timeDiff === '0h0m') {
+                return 0;
+            }
+            const match = timeDiff.match(/^(\d+)(?:h|m)?(\d+)?m?$/);
+            if (match) {
+                const firstNumber = parseInt(match[1]);
+                const secondNumber = match[2] ? parseInt(match[2]) : 0;
+                if (match[0].includes('h') || (!match[0].includes('h') && !match[0].includes('m') && firstNumber >= 60)) {
+                    return firstNumber * 60 + secondNumber;
+                } else {
+                    return firstNumber;
+                }
+            }
+            return 0;
+        }
+
+        // Format minutes to time difference string
+        function formatTimeDiff(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            if (hours === 0 && mins === 0) return '0h0m';
+            if (hours === 0) return `${mins}m`;
+            if (mins === 0) return `${hours}h`;
+            return `${hours}h${mins}m`;
+        }
+
+        // Add minutes to a date
+        function addMinutesToDate(date, minutes) {
+            return new Date(date.getTime() + minutes * 60000);
+        }
+
+        // Get minutes between two dates
+        function getMinutesBetweenDates(date1, date2) {
+            return Math.round((date2 - date1) / 60000);
+        }
+
+        // Format time to HH:MM
+        function formatTime(date) {
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+
+        // Format sunset time
+        function formatSunsetTime(date) {
+            const hours = date.getHours();
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const period = hours >= 12 ? 'pm' : 'am';
+            const formattedHours = hours % 12 || 12;
+            return `${formattedHours}:${minutes}${period}`;
+        }
+
+        // Format date and time
+        function formatDateTime(date) {
+            return date.toLocaleString('en-US', { 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit', 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit', 
+                hour12: true 
+            });
+        }
+
+        // DOM elements
+        const firstCrossingTimeDiff = document.getElementById('first-crossing-time-diff');
+        const firstCrossingTime = document.getElementById('first-crossing-time');
+        const secondCrossingTimeDiff = document.getElementById('second-crossing-time-diff');
+        const secondCrossingTime = document.getElementById('second-crossing-time');
+        const firstCrossingWeather = document.getElementById('first-crossing-weather');
+        const secondCrossingWeather = document.getElementById('second-crossing-weather');
+        const sunsetInfo = document.getElementById('sunset-info');
+        const firstHoursSelect = document.getElementById('first-crossing-hours');
+        const firstMinutesSelect = document.getElementById('first-crossing-minutes');
+        const secondHoursSelect = document.getElementById('second-crossing-hours');
+        const secondMinutesSelect = document.getElementById('second-crossing-minutes');
+
+        // Main logic functions
+        
+        // Update first crossing information
+        function updateFirstCrossing() {
+            const now = new Date();
+            let fcitMinutes = parseTimeDiff(firstCrossingTimeDiff.value);
+            let fcat = new Date(now.getTime() + fcitMinutes * 60000);
+
+            // Ensure fcat is not before now and not after 11:59 PM today
+            const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59);
+            if (fcat < now || fcat > endOfToday) {
+                provideFeedback(firstCrossingTime);
+                fcat = new Date(Math.max(now.getTime(), Math.min(fcat.getTime(), endOfToday.getTime())));
+            }
+
+            fcitMinutes = getMinutesBetweenDates(now, fcat);
+            
+            firstCrossingTime.value = formatTime(fcat);
+            firstCrossingTimeDiff.value = normalizeTimeDiff(formatTimeDiff(fcitMinutes));
+
+            updateAllInputs();
+            updateSecondCrossing(fcat);
+            updateWeather('first', fcat);
+        }
+
+        // Update second crossing information
+        function updateSecondCrossing(fcat) {
+            if (!fcat) {
+                const [hours, minutes] = firstCrossingTime.value.split(':');
+                const now = new Date();
+                fcat = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(hours), parseInt(minutes));
+            }
+
+            let scitMinutes = parseTimeDiff(secondCrossingTimeDiff.value);
+            let scat = new Date(fcat.getTime() + scitMinutes * 60000);
+
+            // Ensure scat is not before fcat and not after 11:59 PM today
+            const endOfToday = new Date(fcat.getFullYear(), fcat.getMonth(), fcat.getDate(), 23, 59);
+            if (scat < fcat || scat > endOfToday) {
+                provideFeedback(secondCrossingTime);
+                scat = new Date(Math.max(fcat.getTime(), Math.min(scat.getTime(), endOfToday.getTime())));
+            }
+
+            scitMinutes = getMinutesBetweenDates(fcat, scat);
+
+            secondCrossingTime.value = formatTime(scat);
+            secondCrossingTimeDiff.value = normalizeTimeDiff(formatTimeDiff(scitMinutes));
+
+            setSecondCrossingTimeDiff(secondCrossingTimeDiff.value);
+
+            updateAllInputs();
+            updateWeather('second', scat);
+        }
+
+        // Handle first crossing time change
+        function handleFirstCrossingTimeChange() {
+            const now = new Date();
+            const [hours, minutes] = firstCrossingTime.value.split(':');
+            let fcat = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(hours), parseInt(minutes));
+
+            // Ensure fcat is not before now and not after 11:59 PM today
+            const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59);
+            if (fcat < now || fcat > endOfToday) {
+                provideFeedback(firstCrossingTime);
+                fcat = new Date(Math.max(now.getTime(), Math.min(fcat.getTime(), endOfToday.getTime())));
+                firstCrossingTime.value = formatTime(fcat);
+            }
+
+            let fcitMinutes = getMinutesBetweenDates(now, fcat);
+
+            firstCrossingTimeDiff.value = formatTimeDiff(fcitMinutes);
+            setFirstCrossingTimeDiff(firstCrossingTimeDiff.value);
+
+            updateFirstCrossing();
+        }
+
+        // Handle second crossing time change
+        function handleSecondCrossingTimeChange() {
+            const [firstHours, firstMinutes] = firstCrossingTime.value.split(':');
+            const [secondHours, secondMinutes] = secondCrossingTime.value.split(':');
+            const now = new Date();
+            
+            let fcat = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(firstHours), parseInt(firstMinutes));
+            let scat = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(secondHours), parseInt(secondMinutes));
+            
+            // Ensure scat is not before fcat and not after 11:59 PM today
+            const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59);
+            if (scat < fcat || scat > endOfToday) {
+                provideFeedback(secondCrossingTime);
+                scat = new Date(Math.max(fcat.getTime(), Math.min(scat.getTime(), endOfToday.getTime())));
+                secondCrossingTime.value = formatTime(scat);
+            }
+
+            let scitMinutes = getMinutesBetweenDates(fcat, scat);
+
+            secondCrossingTimeDiff.value = formatTimeDiff(scitMinutes);
+            setSecondCrossingTimeDiff(secondCrossingTimeDiff.value);
+            
+            updateSecondCrossing(fcat);
+        }
+
+        // Update single input (for mobile view)
+        function updateSingleInput(timeDiffInput, hoursSelect, minutesSelect, crossing) {
+            const hours = parseInt(hoursSelect.value);
+            const minutes = parseInt(minutesSelect.value);
+            const value = formatTimeDiff(hours * 60 + minutes);
+            timeDiffInput.value = value;
+            
+            if (crossing === 'first') {
+                setFirstCrossingTimeDiff(value);
+                updateFirstCrossing();
+            } else {
+                setSecondCrossingTimeDiff(value);
+                updateSecondCrossing();
+            }
+        }
+
+        // Populate hour and minute dropdowns
+        function populateDropdowns(hoursSelect, minutesSelect) {
+            hoursSelect.innerHTML = '';
+            minutesSelect.innerHTML = '';
+
+            for (let i = 0; i <= 23; i++) {
+                hoursSelect.innerHTML += `<option value="${i}">${i}h</option>`;
+            }
+
+            for (let i = 0; i <= 59; i++) {
+                minutesSelect.innerHTML += `<option value="${i}">${i}m</option>`;
+            }
+        }
+
+        // Update dropdowns when single input changes
+        function updateDropdowns(timeDiffInput, hoursSelect, minutesSelect) {
+            const [hours, minutes] = parseTimeDiff(timeDiffInput.value);
+            hoursSelect.value = hours;
+            minutesSelect.value = minutes;
+        }
+
+        // Fetch sunset data from API
+        async function fetchSunsetData() {
+            const now = new Date();
+            // Log current system time when fetching sunset data
+            // console.log('Current system time:', now);
+            const today = now.toISOString().split('T')[0];
+            const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            
+            try {
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=37.8199&longitude=-122.4783&daily=sunset&timezone=America/Los_Angeles&start_date=${today}&end_date=${tomorrow}`;
+                const response = await axios.get(url);
+                const data = response.data;
+                
+                if (data.daily && data.daily.sunset && data.daily.sunset.length >= 2) {
+                    const todaySunset = new Date(data.daily.sunset[0]);
+                    const tomorrowSunset = new Date(data.daily.sunset[1]);
+                    
+                    let sunsetToShow;
+                    let dateToShow;
+                    
+                    // Compare dates without time
+                    const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    const todaySunsetDate = new Date(todaySunset.getFullYear(), todaySunset.getMonth(), todaySunset.getDate());
+                    
+                    if (nowDate.getTime() === todaySunsetDate.getTime()) {
+                        // If the dates match, it's today
+                        sunsetToShow = todaySunset;
+                        dateToShow = now;
+                        // Log when showing today's sunset
+                        // console.log('Showing today\'s sunset');
+                    } else {
+                        // If the dates don't match, it's tomorrow
+                        sunsetToShow = tomorrowSunset;
+                        dateToShow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+                        // Log when showing tomorrow's sunset
+                        // console.log('Showing tomorrow\'s sunset');
+                    }
+                    
+                    const formattedDate = dateToShow.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+                    sunsetInfo.innerHTML = `<p>Next sunset at ${formatSunsetTime(sunsetToShow)} on ${formattedDate}</p>`;
+                } else {
+                    sunsetInfo.innerHTML = '<p>Sunset information not available.</p>';
+                }
+            } catch (error) {
+                console.error('Error fetching sunset data:', error);
+                sunsetInfo.innerHTML = '<p>Sunset information not available.</p>';
+            }
+        }
+
+        // Update weather information for a given crossing (first or second) at a specific time
+        async function updateWeather(crossing, specificTime = null) {
+            const timeInput = crossing === 'first' ? firstCrossingTime : secondCrossingTime;
+            const weatherInfo = crossing === 'first' ? firstCrossingWeather : secondCrossingWeather;
+
+            try {
+                const now = new Date();
+                let targetTime = specificTime ? new Date(specificTime) : new Date(now.getFullYear(), now.getMonth(), now.getDate(), ...timeInput.value.split(':').map(Number));
+
+                // Ensure second crossing is not earlier than the first
+                if (crossing === 'second') {
+                    const firstCrossingDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), ...firstCrossingTime.value.split(':').map(Number));
+                    if (targetTime < firstCrossingDate) {
+                        targetTime = new Date(firstCrossingDate);
+                    }
+                }
+
+                // If the target time is in the past, move it to now
+                if (targetTime < now) {
+                    targetTime = new Date(now);
+                }
+
+                // Format the date for the API request (current date only)
+                const formattedDate = now.toISOString().split('T')[0];
+
+                // Round the target time to the nearest hour
+                const roundedTime = new Date(targetTime.getFullYear(), targetTime.getMonth(), targetTime.getDate(), targetTime.getHours() + Math.round(targetTime.getMinutes() / 60));
+                const apiTimeString = roundedTime.toISOString().slice(0, 16);
+
+                // Fetch weather data from the API (for current date only)
+                const response = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=37.8199&longitude=-122.4783&hourly=temperature_2m,windspeed_10m,precipitation_probability&timezone=America/Los_Angeles&start_date=${formattedDate}&end_date=${formattedDate}&temperature_unit=fahrenheit`);
+
+                const data = response.data;
+
+                const hourIndex = targetTime.getHours();
+
+                const temperature = data.hourly.temperature_2m[hourIndex];
+                const windSpeed = data.hourly.windspeed_10m[hourIndex];
+                const precipitationProbability = data.hourly.precipitation_probability[hourIndex];
+
+                weatherInfo.innerHTML = `
+                    <p>Temperature: ${temperature.toFixed(1)}°F</p>
+                    <p>Wind Speed: ${(windSpeed * 0.621371).toFixed(1)} mph</p>
+                    <p>Precipitation Probability: ${precipitationProbability}%</p>
+                `;
+            } catch (error) {
+                console.error(`Error fetching weather data for ${crossing} crossing:`, error);
+                weatherInfo.innerHTML = '<p>Unable to fetch weather data. Please try again later.</p>';
+            }
+        }
+
+        // Initialize page
+        function initializePage() {
+            const now = new Date();
+            // Log when initializing the page
+            // console.log(`Initializing page at: ${formatDateTime(now)}`);
+            
+            // Set first crossing time
+            const firstTimeDiff = normalizeTimeDiff(getFirstCrossingTimeDiff());
+            firstCrossingTimeDiff.value = firstTimeDiff;
+
+            // Set second crossing time
+            const secondTimeDiff = normalizeTimeDiff(getSecondCrossingTimeDiff());
+            secondCrossingTimeDiff.value = secondTimeDiff;
+
+            updateFirstCrossing();
+
+            // Populate dropdowns
+            populateDropdowns(firstHoursSelect, firstMinutesSelect);
+            populateDropdowns(secondHoursSelect, secondMinutesSelect);
+
+            // Update dropdowns with initial values
+            updateMobileInputs();
+        }
+
+        // Event listeners
+        firstCrossingTimeDiff.addEventListener('change', () => {
+            setFirstCrossingTimeDiff(firstCrossingTimeDiff.value);
+            updateFirstCrossing();
+        });
+
+        secondCrossingTimeDiff.addEventListener('change', () => {
+            setSecondCrossingTimeDiff(secondCrossingTimeDiff.value);
+            updateSecondCrossing();
+        });
+
+        // First crossing time event listener
+        firstCrossingTime.addEventListener('change', handleFirstCrossingTimeChange);
+
+        // Second crossing time event listener
+        secondCrossingTime.addEventListener('change', handleSecondCrossingTimeChange);
+
+        // Function to update weather periodically
+        function startWeatherUpdate() {
+            setInterval(() => {
+                updateWeather('first');
+                updateWeather('second');
+            }, 60000); // Update every minute
+        }
+
+        // Helper function to log the current state
+        function logCurrentState() {
+            // Log current state header
+            // console.log('Current State:');
+            // Log first crossing time difference
+            // console.log(`First crossing time diff: ${firstCrossingTimeDiff.value}`);
+            // Log first crossing time
+            // console.log(`First crossing time: ${firstCrossingTime.value}`);
+            // Log second crossing time difference
+            // console.log(`Second crossing time diff: ${secondCrossingTimeDiff.value}`);
+            // Log second crossing time
+            // console.log(`Second crossing time: ${secondCrossingTime.value}`);
+        }
+
+        // Call fetchSunsetData on page load
+        fetchSunsetData();
+
+        // Start periodic weather updates
+        startWeatherUpdate();
+
+        // Initialize the page
+        initializePage();
+
+        // Functions to handle mobile input changes
+        function handleMobileFirstCrossingChange() {
+            const hours = parseInt(firstHoursSelect.value);
+            const minutes = parseInt(firstMinutesSelect.value);
+            const value = formatTimeDiff(hours * 60 + minutes);
+            firstCrossingTimeDiff.value = value;
+            setFirstCrossingTimeDiff(value);
+            updateFirstCrossing();
+        }
+
+        function handleMobileSecondCrossingChange() {
+            const hours = parseInt(secondHoursSelect.value);
+            const minutes = parseInt(secondMinutesSelect.value);
+            const value = formatTimeDiff(hours * 60 + minutes);
+            secondCrossingTimeDiff.value = value;
+            setSecondCrossingTimeDiff(value);
+            updateSecondCrossing();
+        }
+
+        // Event listeners for mobile inputs
+        firstHoursSelect.addEventListener('change', handleMobileFirstCrossingChange);
+        firstMinutesSelect.addEventListener('change', handleMobileFirstCrossingChange);
+        secondHoursSelect.addEventListener('change', handleMobileSecondCrossingChange);
+        secondMinutesSelect.addEventListener('change', handleMobileSecondCrossingChange);
+
+        // Function to update mobile inputs from desktop values
+        function updateMobileInputs() {
+            const firstMinutes = parseTimeDiff(firstCrossingTimeDiff.value);
+            firstHoursSelect.value = Math.floor(firstMinutes / 60);
+            firstMinutesSelect.value = firstMinutes % 60;
+
+            const secondMinutes = parseTimeDiff(secondCrossingTimeDiff.value);
+            secondHoursSelect.value = Math.floor(secondMinutes / 60);
+            secondMinutesSelect.value = secondMinutes % 60;
+        }
+
+        // Function to update both mobile and desktop inputs
+        function updateAllInputs() {
+            updateMobileInputs();
+            firstCrossingTime.value = formatTime(addMinutesToDate(new Date(), parseTimeDiff(firstCrossingTimeDiff.value)));
+            secondCrossingTime.value = formatTime(addMinutesToDate(new Date(), parseTimeDiff(firstCrossingTimeDiff.value) + parseTimeDiff(secondCrossingTimeDiff.value)));
+        }
+
+        // Window resize event listener
+        window.addEventListener('resize', updateAllInputs);
+
+        // Function to determine if it's night time (between 8 PM and 6 AM)
+        function isNightTime() {
+            const hour = new Date().getHours();
+            return hour < 6 || hour >= 20; // Consider night time between 8 PM and 6 AM
+        }
+
+        // Function to apply the appropriate theme based on time of day
+        function applyTheme() {
+            const body = document.body;
+            const isNight = isNightTime();
+            
+            if (isNight) {
+                body.classList.add('night-mode');
+            } else {
+                body.classList.remove('night-mode');
+            }
+        }
+
+        // Apply theme on page load
+        applyTheme();
+
+        // Check and update theme every minute
+        setInterval(applyTheme, 60000);
+
+        // Add these new functions and variables for the weather chart and best visit time
+
+        let weatherChart;
+        let chartData;
+
+        async function fetchWeatherData() {
+            try {
+                // Fetch weather data from Open-Meteo API
+                const response = await axios.get('https://api.open-meteo.com/v1/forecast?latitude=37.8199&longitude=-122.4783&hourly=temperature_2m,cloudcover,windspeed_10m,precipitation_probability&timezone=America/Los_Angeles&forecast_days=1&temperature_unit=fahrenheit');
+                const data = response.data;
+
+                // Extract and process the hourly data
+                const times = data.hourly.time.map(time => new Date(time));
+                const temperatures = data.hourly.temperature_2m;
+                const cloudCover = data.hourly.cloudcover;
+                const windSpeed = data.hourly.windspeed_10m;
+                const precipProb = data.hourly.precipitation_probability;
+
+                // Filter data to include only hours between 5am and 9pm
+                const filteredData = times.reduce((acc, time, index) => {
+                    const hour = time.getHours();
+                    if (hour >= 5 && hour <= 21) {  // 5am to 9pm
+                        acc.times.push(time);
+                        acc.temperatures.push(temperatures[index]);
+                        acc.cloudCover.push(cloudCover[index]);
+                        acc.windSpeed.push(windSpeed[index]);
+                        acc.precipProb.push(precipProb[index]);
+                    }
+                    return acc;
+                }, { times: [], temperatures: [], cloudCover: [], windSpeed: [], precipProb: [] });
+
+                // Update the weather chart and best visit time with the filtered data
+                updateWeatherChart(filteredData);
+                updateBestVisitTime(filteredData);
+            } catch (error) {
+                console.error('Error fetching weather data:', error);
+            }
+        }
+
+        function updateWeatherChart(data) {
+            const ctx = document.getElementById('weatherChart').getContext('2d');
+            const isMobile = window.innerWidth <= 640;
+
+            // Destroy existing chart if it exists
+            if (weatherChart) {
+                weatherChart.destroy();
+            }
+
+            // Store the current chart data
+            chartData = data;
+
+            // Define colors for each data series
+            const chartColors = {
+                temperature: 'rgb(255, 99, 132)',
+                cloudCover: 'rgb(54, 162, 235)',
+                windSpeed: 'rgb(75, 192, 192)',
+                precipProb: 'rgb(153, 102, 255)'
+            };
+
+            // Update mobile legend colors
+            const legendItems = document.querySelectorAll('#mobile-legend .rounded-full');
+            legendItems[0].style.backgroundColor = chartColors.temperature;
+            legendItems[1].style.backgroundColor = chartColors.cloudCover;
+            legendItems[2].style.backgroundColor = chartColors.windSpeed;
+            legendItems[3].style.backgroundColor = chartColors.precipProb;
+
+            // Create new Chart.js instance
+            weatherChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.times.map(formatTime),
+                    datasets: [
+                        {
+                            label: 'Temperature (°F)',
+                            data: data.temperatures,
+                            borderColor: chartColors.temperature,
+                            backgroundColor: chartColors.temperature + '33',
+                            pointBackgroundColor: chartColors.temperature,
+                            yAxisID: 'y-temperature',
+                        },
+                        {
+                            label: 'Cloud Cover (%)',
+                            data: data.cloudCover,
+                            borderColor: chartColors.cloudCover,
+                            backgroundColor: chartColors.cloudCover + '33',
+                            pointBackgroundColor: chartColors.cloudCover,
+                            yAxisID: 'y-percentage',
+                        },
+                        {
+                            label: 'Wind Speed (mph)',
+                            data: data.windSpeed.map(speed => Number((speed * 0.621371).toFixed(1))),
+                            borderColor: chartColors.windSpeed,
+                            backgroundColor: chartColors.windSpeed + '33',
+                            pointBackgroundColor: chartColors.windSpeed,
+                            yAxisID: 'y-wind',
+                        },
+                        {
+                            label: 'Precipitation Probability (%)',
+                            data: data.precipProb,
+                            borderColor: chartColors.precipProb,
+                            backgroundColor: chartColors.precipProb + '33',
+                            pointBackgroundColor: chartColors.precipProb,
+                            yAxisID: 'y-percentage',
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    aspectRatio: isMobile ? 1 : 2, // Adjust aspect ratio for mobile
+                    plugins: {
+                        legend: {
+                            display: !isMobile,
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: 'line',
+                                boxWidth: 40,
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    // Parse the time string correctly
+                                    const timeStr = tooltipItems[0].label;
+                                    const [hours, minutes] = timeStr.split(':').map(Number);
+                                    const ampm = hours >= 12 ? 'PM' : 'AM';
+                                    const hours12 = hours % 12 || 12;
+                                    return `${hours12}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+                                },
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y.toFixed(1);
+                                        if (context.dataset.label === 'Wind Speed (mph)') {
+                                            label += ' mph';
+                                        } else if (context.dataset.label.includes('%')) {
+                                            label += '%';
+                                        } else if (context.dataset.label.includes('°F')) {
+                                            label += '°F';
+                                        }
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    elements: {
+                        point: {
+                            radius: 3,
+                            hoverRadius: 5,
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                callback: function(val, index) {
+                                    // Format x-axis labels
+                                    const time = this.getLabelForValue(val);
+                                    const [hours, minutes] = time.split(':');
+                                    const hourNum = parseInt(hours);
+                                    const amPm = hourNum >= 12 ? 'P' : 'A';
+                                    const hour12 = hourNum % 12 || 12;
+
+                                    if (isMobile) {
+                                        // Show fewer labels on mobile
+                                        const displayHours = [5, 7, 9, 11, 13, 15, 17, 19, 21];
+                                        if (displayHours.includes(hourNum)) {
+                                            return `${hour12}${amPm}`;
+                                        }
+                                        return '';
+                                    } else {
+                                        return `${hour12}:${minutes}${amPm}`;
+                                    }
+                                },
+                                maxRotation: 0,
+                                font: {
+                                    size: 9 // Smaller font size for mobile
+                                }
+                            }
+                        },
+                        'y-temperature': {
+                            type: 'linear',
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Temperature (°F)'
+                            },
+                        },
+                        'y-percentage': {
+                            type: 'linear',
+                            position: 'right',
+                            min: 0,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Cloud Cover & Precipitation (%)'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            }
+                        },
+                        'y-wind': {
+                            type: 'linear',
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Wind Speed (mph)'
+                            },
+                            min: 0,
+                            max: 30,  // Adjust this based on your typical wind speed range
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    }
+                },
+            });
+        }
+
+        function updateBestVisitTime(data) {
+            let scores = [];
+
+            // Calculate scores for each time slot
+            for (let i = 0; i < data.times.length; i++) {
+                const hour = data.times[i].getHours();
+                if (hour >= 6 && hour <= 20) {
+                    const tempScore = data.temperatures[i] * 2;
+                    const rainScore = 100 - data.precipProb[i];
+                    const cloudScore = (100 - data.cloudCover[i]) / 2;
+                    const windScore = (20 - data.windSpeed[i]) / 2;
+                    
+                    const totalScore = tempScore + rainScore + cloudScore + windScore;
+                    scores.push({ time: data.times[i], score: totalScore });
+                }
+            }
+
+            // Sort scores to find the best times
+            scores.sort((a, b) => b.score - a.score);
+
+            const bestTime1 = scores[0].time;
+            const bestTime2 = scores[1].time;
+
+            // Helper function to create info list for a given time
+            function createInfoList(time) {
+                const i = data.times.findIndex(t => t.getTime() === time.getTime());
+                const hours = time.getHours();
+                const minutes = time.getMinutes().toString().padStart(2, '0');
+                const ampm = hours >= 12 ? 'pm' : 'am';
+                const hours12 = hours % 12 || 12;
+                const formattedTime = `${hours12}:${minutes}${ampm}`;
+
+                // Convert wind speed from km/h to mph
+                const windSpeedMph = (data.windSpeed[i] * 0.621371).toFixed(1);
+
+                return `
+                    <li>⏰ ${formattedTime}</li>
+                    <li>🌡️ ${data.temperatures[i].toFixed(1)}°F</li>
+                    <li>🌧 ${data.precipProb[i]}% chance</li>
+                    <li>☁️ ${data.cloudCover[i]}% cover</li>
+                    <li>🌬️ ${windSpeedMph} mph</li>
+                `;
+            }
+
+            // Update the DOM with the best visit times
+            document.getElementById('best-time-info-1').innerHTML = createInfoList(bestTime1);
+            document.getElementById('best-time-info-2').innerHTML = createInfoList(bestTime2);
+        }
+
+        // Call fetchWeatherData on page load
+        fetchWeatherData();
+
+        // Update weather data every 30 minutes
+        setInterval(fetchWeatherData, 1800000);
+
+        // Recreate chart on window resize
+        window.addEventListener('resize', () => {
+            if (chartData) {
+                updateWeatherChart(chartData);
+            }
+        });
+
+        // Function to update the image
+        async function updateGGBImage() {
+            const img = document.getElementById('ggb-image');
+            img.classList.add('loading');
+
+            try {
+                // Cache-busting technique 1: Use GitHub API to get the latest file content
+                // This bypasses GitHub's raw content caching
+                const apiUrl = 'https://api.github.com/repos/danielraffel/ggb/contents/ggb.screenshot.png';
+                const apiResponse = await fetch(apiUrl, {
+                    headers: {
+                        'Accept': 'application/vnd.github.v3+json',
+                        // Cache-busting technique 2: Add no-cache header to API request
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+                const fileData = await apiResponse.json();
+
+                if (!fileData.content) {
+                    throw new Error('No content found in the API response');
+                }
+
+                // Cache-busting technique 3: Decode and use the Base64 content directly
+                // This ensures we're using the exact data returned by the API, not a cached version
+                const byteCharacters = atob(fileData.content);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], {type: 'image/png'});
+
+                // Cache-busting technique 4: Use a Blob URL
+                // This creates a unique URL for each new image version
+                const objectURL = URL.createObjectURL(blob);
+                
+                // Create a new Image object to preload the image
+                const tempImg = new Image();
+                tempImg.onload = function() {
+                    console.log('New image loaded, updating src');
+                    // Cache-busting technique 5: Update image src with the new Blob URL
+                    // This ensures the browser displays the new image, not a cached version
+                    img.src = objectURL;
+                    URL.revokeObjectURL(img.src);
+                    img.classList.remove('loading');
+                };
+                tempImg.onerror = function() {
+                    console.error('Error loading new image');
+                    img.classList.remove('loading');
+                };
+                tempImg.src = objectURL;
+            } catch (error) {
+                console.error('Error fetching image:', error);
+                img.classList.remove('loading');
+            }
+        }
+
+        // Cache-busting technique 6: Frequent updates
+        // Update the image every 30 seconds to ensure latest version
+        setInterval(updateGGBImage, 30 * 1000);
+
+        // Call updateGGBImage immediately after defining the image element
+        document.getElementById('ggb-image').onload = function() {
+            updateGGBImage();
+        };
+
+        // Add this function to provide subtle UX feedback
+        function provideFeedback(element) {
+            console.log('Providing feedback for', element.id);
+            element.classList.remove('animate-blink');
+            void element.offsetWidth; // Trigger reflow
+            element.classList.add('animate-blink');
+            setTimeout(() => {
+                element.classList.remove('animate-blink');
+            }, 1500);
+        }
+    </script>
+</body>
+</html>

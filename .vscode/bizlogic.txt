@@ -1,0 +1,143 @@
+Below is a detailed, step-by-step explanation of how the first crossing and second crossing times are calculated, how adjusting either the “time” or the “hour/minute offsets” affects both crossings, and how default values as well as user-selected values are saved. This description is written from the perspective of the JavaScript code you provided, but in more “business logic” terms.
+
+1. Overview of the Core Concepts
+Current Time (now)
+This business logic assumes users adjust crossing times exclusively through hour and minute dropdowns. Combined input fields or free-form text entry are not supported.
+All time calculations are based on the current device time (now). Time offsets are expressed relative to now.
+First Crossing Time (firstCrossingTime or fcat)
+The first crossing time can be set in two ways:
+Offset from Now: For example, “1 hour and 30 minutes from now.”
+Exact Clock Time: For example, “10:15 AM.”
+The offset is stored in localStorage as firstCrossingTimeDiff (e.g., "1h30m"), and the derived clock time is calculated as an "HH:MM" string (firstCrossingTime.value).
+Second Crossing Time (secondCrossingTime or scat)
+The second crossing time is always dependent on the first crossing:
+By default, it is defined as an offset relative to the first crossing (e.g., “2 hours after the first crossing”).
+It can also be set to an exact clock time.
+The offset is stored in localStorage as secondCrossingTimeDiff (e.g., "2h0m"), with the exact clock time calculated as "HH:MM" (secondCrossingTime.value).
+Dropdown Inputs
+Crossing times are adjusted using two dropdowns:
+Hours: Ranges from 0–23.
+Minutes: Ranges from 0–59.
+Adjusting either dropdown recalculates the respective crossing time in real time, syncing all derived values dynamically.
+LocalStorage
+Offsets Persisted: Time offsets (firstCrossingTimeDiff and secondCrossingTimeDiff) are stored in localStorage, ensuring preferences persist across sessions.
+Derived Times Ephemeral: Exact clock times (e.g., "10:15") are not stored in localStorage. These are recalculated dynamically on each page load based on stored offsets and the current time (now).
+
+2. The First Crossing Logic
+Initialization
+On page load, the code grabs whatever is in localStorage for firstCrossingTimeDiff.
+If there is nothing, it defaults to "0h0m" (meaning crossing “now”).
+It normalizes this string to make sure it looks like "XhYm", "Xm", or "0h0m".
+This offset in minutes (fcitMinutes) is added to the current time (now) to derive an exact date/time for the first crossing (fcat).
+Constraints
+The code ensures the first crossing time is:
+Not in the past: If the calculated fcat is before now, it snaps to now.
+Not after midnight (or 11:59 PM) on the current day: If fcat would exceed the end of day, it snaps it back to 11:59 PM.
+Updates When the User Changes the First Crossing
+A. User adjusts the offset (Hours/Minutes or Text Field)
+The user adjusts the dropdowns to select '1 hour' and '30 minutes,' representing a total offset of 90 minutes.
+That new offset is stored in localStorage and used to compute a new fcat.
+The exact clock-time input (firstCrossingTime.value) is then updated automatically to reflect the newly computed crossing time.
+B. User adjusts the exact clock time (dropdowns for hours and minutes)
+The user might pick “10:15.”
+The code calculates the difference between “10:15 today” and now → that difference in minutes becomes firstCrossingTimeDiff.
+That new offset is stored in localStorage.
+It also revalidates the time so that if the user accidentally set a time earlier than now or after 11:59 PM, the code “snaps” it back to the valid range.
+Effect on the Second Crossing
+Because the second crossing time is defined relative to the first crossing, any change to the first crossing (offset or time) will automatically recalculate the second crossing.
+The second crossing has its own offset, but that offset is measured from the newly computed first crossing time.
+Saving
+Only the offset string (firstCrossingTimeDiff) is permanently saved in localStorage.
+The exact clock time, once computed, is reflected in the UI (<input type="time">) but is not stored in localStorage.
+If the user reloads the page, the code will read the offset from localStorage again, re-calculate the new “time from now,” and show it in the firstCrossingTime input.
+
+3. The Second Crossing Logic
+Default Behavior
+On page load, secondCrossingTimeDiff is read from localStorage. If empty, it defaults to "2h0m".
+When the first crossing is computed, the code takes that time (fcat) and adds secondCrossingTimeDiff to get the second crossing date/time (scat).
+Constraints
+The code ensures the second crossing time is:
+Not earlier than the first crossing: If a user tries to pick a second crossing that is earlier than the first, it gets snapped to the first crossing time.
+Not after 11:59 PM. Any invalid time is snapped to the valid range.
+Updates When the User Changes the Second Crossing
+A. User adjusts the “later at ___” offset (Hours/Minutes or Text Field)
+The user might select “3 hours, 0 minutes”.
+This is stored in localStorage as secondCrossingTimeDiff.
+The code recomputes scat by adding that offset to the first crossing (fcat).
+The exact clock-time input (secondCrossingTime.value) is automatically updated to reflect the newly computed time.
+B. User adjusts the exact clock time (Time Picker)
+The user might pick “1:45 PM.”
+The code finds the difference in minutes between “1:45 PM” and the first crossing time. That difference becomes the new secondCrossingTimeDiff, stored in localStorage.
+If the chosen time is before the first crossing, or beyond 11:59 PM, it snaps to a valid time.
+Saving
+As with the first crossing, only the offset string (secondCrossingTimeDiff) is saved to localStorage. The user’s chosen clock time is effectively ephemeral—always recalculated from the offset plus the first crossing time.
+
+4. Mobile Inputs
+On mobile, time adjustments are always made using two dropdowns: one for hours (0..23) and one for minutes (0..59). Other input styles, such as a single combined input field, are not supported.
+Whenever you change the dropdown:
+The combined hours/minutes becomes an offset in minutes (e.g., 1 * 60 + 30 = 90 minutes).
+That offset is transformed into a string like "1h30m".
+The time picker input is updated accordingly.
+Whenever you change the text or time input, the dropdown is updated to reflect the new total minutes.
+These two views keep in sync in real time.
+
+5. Temporary Storage vs. LocalStorage
+Temporary (In-Memory) State
+As soon as you type a new offset or pick a new time, the page recalculates everything in JavaScript memory.
+The input fields (.value) for “time” are not preserved across page reloads.
+LocalStorage
+As soon as you type in a new offset (or pick a time that triggers a new offset calculation), the setFirstCrossingTimeDiff(value) or setSecondCrossingTimeDiff(value) function saves that offset string to localStorage.
+On each page load, the code calls getFirstCrossingTimeDiff() and getSecondCrossingTimeDiff() to re-initialize the offsets from localStorage.
+This means the user’s chosen offset will “stick” for future visits—though the exact clock time shown will always be recalculated to be “X hours from now.”
+When the page loads, dropdowns for hours and minutes are automatically pre-filled with stored offsets, ensuring consistency across sessions.
+
+6. Summary of the Interactions
+User adjusts First Crossing offset (desktop or mobile)
+We convert that offset to minutes → add to current time → clamp if invalid.
+UI updates the time picker for the first crossing.
+Second crossing is recalculated from that new first crossing time + second crossing offset.
+User adjusts First Crossing time
+We calculate the difference between chosen clock time and current time → that becomes the new firstCrossingTimeDiff, saved to localStorage.
+We clamp if out of valid range.
+Recompute second crossing from the new first crossing time + the existing secondCrossingTimeDiff.
+User adjusts Second Crossing offset
+We recalculate the second crossing by taking the first crossing time + the new offset.
+UI updates the second crossing time picker.
+We clamp if out of range (not earlier than the first crossing and not after 11:59 PM).
+That offset is saved in localStorage.
+User adjusts Second Crossing time
+We figure out how many minutes separate the second crossing’s chosen clock time from the first crossing time.
+That difference becomes secondCrossingTimeDiff in localStorage.
+We clamp if needed.
+The offset input on desktop or the hour/minute dropdown on mobile is updated accordingly.
+
+7. Important Edge Cases & Clamping Rules
+Adjusting dropdowns for hours and minutes ensures all crossing times are recalculated dynamically, applying clamping rules when necessary. When a user selects dropdown values that result in an invalid time (e.g., before now or after midnight), the UI automatically snaps the time to the nearest valid boundary.
+Crossing time cannot be before “now.”
+If a user picks a time in the past, we snap it to now.
+Crossing time cannot be after 11:59 PM.
+If a user picks a time or offset that pushes the crossing to after midnight, we snap to 11:59 PM.
+Second Crossing time cannot be before the First Crossing.
+If a user picks a second crossing earlier than the first, we snap it to match the first crossing time.
+These clamping rules trigger a brief “blink” effect in the UI as visual feedback to indicate the system just adjusted (clamped) an invalid choice.
+
+8. How Defaults and Persistence Work
+When loading defaults or persisted offsets from localStorage, the dropdowns for hours and minutes are pre-filled to reflect the corresponding offset in minutes.
+Defaults
+If the user never changed anything (or localStorage is empty):
+First crossing offset = "0h0m" → meaning “right now.”
+Second crossing offset = "2h0m" → meaning “2 hours after the first crossing.”
+Persistence
+If the user changes, e.g., the first crossing offset to “1h30m,” that string is written to localStorage. On the next visit, the code sees "1h30m" and sets the first crossing to be 1 hour 30 minutes from the current time.
+Because the clock time is always relative to “now,” the user sees a fresh crossing time the next day, but the offset is the same.
+
+9. Key Takeaways
+The first crossing is offset from “now,” or explicitly set to a clock time.
+The second crossing is always offset from the first crossing.
+Dual Input Style:
+You can adjust crossing times exclusively using dropdowns for hours and minutes, which automatically calculate and display the updated times.
+LocalStorage:
+Remembers the offsets (not the exact clock time) so that your “time from now” preference persists across page loads.
+Clamping:
+Invalid times are auto-corrected to either “now,” “first crossing,” or “end of day.”
+This ensures that (1) the user always sees valid times, (2) the second crossing remains logically dependent on the first, and (3) the user’s chosen offsets survive page reloads (whereas the exact clock times reset to reflect the new “now” each time).
