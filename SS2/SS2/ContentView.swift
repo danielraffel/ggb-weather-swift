@@ -82,8 +82,10 @@ struct ContentView: View {
                 Task {
                     await presenter.refresh()
                 }
+                presenter.startTimer()
             case .inactive:
                 presenter.saveCrossingTimes()
+                presenter.stopTimer()
             default:
                 break
             }

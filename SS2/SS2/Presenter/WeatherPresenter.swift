@@ -15,6 +15,8 @@ class WeatherPresenter: ObservableObject {
     @Published var bestVisitTimes: [BestVisitTime] = []
     @Published var isRefreshing = false
     
+    private var timer: Timer?
+    
     init(interactor: WeatherInteractorProtocol, crossingTimeInteractor: CrossingTimeInteractorProtocol) {
         self.interactor = interactor
         self.crossingTimeInteractor = crossingTimeInteractor
@@ -151,5 +153,28 @@ class WeatherPresenter: ObservableObject {
         let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: now)
         let roundedDate = calendar.date(from: components)?.addingTimeInterval(0) ?? now
         return roundedDate
+    }
+    
+    func startTimer() {
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            self?.updateCrossingTimes()
+        }
+    }
+    
+    func stopTimer() {
+        timer?.invalidate()
+        timer = nil
+    }
+    
+    private func updateCrossingTimes() {
+        let now = Date()
+        // Only update if first crossing is in the past
+        if firstCrossing.date < now {
+            let (firstDiff, secondDiff) = crossingTimeInteractor.loadSavedTimeDiffs()
+            let crossings = crossingTimeInteractor.calculateValidCrossingTimes(firstDiff: firstDiff, secondDiff: secondDiff)
+            firstCrossing = crossings.first
+            secondCrossing = crossings.second
+            updateCrossingWeather()
+        }
     }
 } 
