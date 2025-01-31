@@ -25,6 +25,20 @@ struct Provider: TimelineProvider {
             windSpeed: 3.4,
             score: 0
         )
+        
+        // Load placeholder image from bundle
+        let imageName = "placeholder_bridge"
+        if let image = UIImage(named: imageName),
+           let imageData = image.pngData() {
+            return WeatherEntry(
+                date: Date(),
+                currentWeather: placeholderWeather,
+                bestTime: placeholderTime,
+                secondBestTime: placeholderTime,
+                imageData: imageData
+            )
+        }
+        
         return WeatherEntry(
             date: Date(),
             currentWeather: placeholderWeather,
@@ -35,8 +49,26 @@ struct Provider: TimelineProvider {
     }
     
     func getSnapshot(in context: Context, completion: @escaping (WeatherEntry) -> ()) {
-        let entry = placeholder(in: context)
-        completion(entry)
+        Task {
+            if context.isPreview {
+                completion(placeholder(in: context))
+                return
+            }
+            
+            do {
+                let imageData = try await fetchBridgeImage()
+                let entry = placeholder(in: context)
+                completion(WeatherEntry(
+                    date: entry.date,
+                    currentWeather: entry.currentWeather,
+                    bestTime: entry.bestTime,
+                    secondBestTime: entry.secondBestTime,
+                    imageData: imageData
+                ))
+            } catch {
+                completion(placeholder(in: context))
+            }
+        }
     }
     
     func getTimeline(in context: Context, completion: @escaping (Timeline<WeatherEntry>) -> ()) {

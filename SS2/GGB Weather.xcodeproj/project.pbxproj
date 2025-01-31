@@ -68,6 +68,13 @@
 			);
 			target = 110811D62D4D66970016D3AA /* GGBWidgetExtension */;
 		};
+		110811F82D4D91FF0016D3AA /* Exceptions for "SS2" folder in "GGBWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+			);
+			target = 110811D62D4D66970016D3AA /* GGBWidgetExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -81,6 +88,9 @@
 		};
 		11138E3B2D34501B00B6E9B6 /* SS2 */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				110811F82D4D91FF0016D3AA /* Exceptions for "SS2" folder in "GGBWidgetExtension" target */,
+			);
 			path = SS2;
 			sourceTree = "<group>";
 		};
