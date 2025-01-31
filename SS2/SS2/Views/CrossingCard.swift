@@ -51,7 +51,7 @@ struct CrossingCard: View {
                     }
                 }
                 .pickerStyle(.menu)
-                .frame(width: 100)  // Width of hour picker
+                .frame(width: 90)  // Width of hour picker
                 .padding(.trailing, -35)  // Space between hour picker and minutes in this case negative
                 
                 Picker("Minutes", selection: $selectedMinutes) {
@@ -64,13 +64,13 @@ struct CrossingCard: View {
                     }
                 }
                 .pickerStyle(.menu)
-                .frame(width: 85)  // Width of minute picker
-                .padding(.trailing, -10)  // Space between minute picker and "at"
+                .frame(width: 95)  // Width of minute picker
+                .padding(.trailing, -25)  // Space between minute picker and "at"
                 
                 Text("at")
                     .foregroundColor(.secondary)
                     .padding(.horizontal, 10)  // Space between "at" and date picker
-                    .padding(.trailing, -0)  // Space between "at" and date picker
+                    .padding(.trailing, 2)  // Space between "at" and date picker
                 
                 DatePicker("", 
                     selection: $selectedTime,
