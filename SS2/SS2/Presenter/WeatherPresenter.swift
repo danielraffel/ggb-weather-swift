@@ -70,12 +70,18 @@ class WeatherPresenter: ObservableObject {
             let formatter = DateFormatter()
             formatter.dateFormat = "h:mm a"
             
-            // Check if sunset is today or tomorrow
             let calendar = Calendar.current
             let now = Date()
-            let isToday = calendar.isDate(sunset, inSameDayAs: now)
             
-            sunsetTime = "\(isToday ? "today" : "tomorrow") at \(formatter.string(from: sunset))"
+            // Check if sunset has already passed for today
+            if sunset < now {
+                // Get tomorrow's sunset by adding 1 day
+                if let tomorrowSunset = calendar.date(byAdding: .day, value: 1, to: sunset) {
+                    sunsetTime = "tomorrow at \(formatter.string(from: tomorrowSunset))"
+                }
+            } else {
+                sunsetTime = "today at \(formatter.string(from: sunset))"
+            }
         } catch {
             print("Error fetching sunset time: \(error)")
         }
