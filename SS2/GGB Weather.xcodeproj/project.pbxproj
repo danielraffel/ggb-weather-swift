@@ -7,10 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		110811DA2D4D66970016D3AA /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 110811D92D4D66970016D3AA /* WidgetKit.framework */; };
+		110811DC2D4D66970016D3AA /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 110811DB2D4D66970016D3AA /* SwiftUI.framework */; };
+		110811ED2D4D66980016D3AA /* GGBWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 110811D72D4D66970016D3AA /* GGBWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		11138E682D3450DA00B6E9B6 /* Inject in Frameworks */ = {isa = PBXBuildFile; productRef = 11138E672D3450DA00B6E9B6 /* Inject */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		110811EB2D4D66980016D3AA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 11138E312D34501B00B6E9B6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 110811D62D4D66970016D3AA;
+			remoteInfo = GGBWidgetExtension;
+		};
 		11138E4A2D34501C00B6E9B6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 11138E312D34501B00B6E9B6 /* Project object */;
@@ -27,13 +37,48 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		110811EE2D4D66980016D3AA /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				110811ED2D4D66980016D3AA /* GGBWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		110811D72D4D66970016D3AA /* GGBWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = GGBWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		110811D92D4D66970016D3AA /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		110811DB2D4D66970016D3AA /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		11138E392D34501B00B6E9B6 /* GGB Weather.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "GGB Weather.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		11138E492D34501C00B6E9B6 /* GGB WeatherTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "GGB WeatherTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		11138E532D34501C00B6E9B6 /* GGB WeatherUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "GGB WeatherUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		110811F12D4D66980016D3AA /* Exceptions for "GGBWidget" folder in "GGBWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 110811D62D4D66970016D3AA /* GGBWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		110811DD2D4D66970016D3AA /* GGBWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				110811F12D4D66980016D3AA /* Exceptions for "GGBWidget" folder in "GGBWidgetExtension" target */,
+			);
+			path = GGBWidget;
+			sourceTree = "<group>";
+		};
 		11138E3B2D34501B00B6E9B6 /* SS2 */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = SS2;
@@ -52,6 +97,15 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		110811D42D4D66970016D3AA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				110811DC2D4D66970016D3AA /* SwiftUI.framework in Frameworks */,
+				110811DA2D4D66970016D3AA /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		11138E362D34501B00B6E9B6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -77,12 +131,23 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		110811D82D4D66970016D3AA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				110811D92D4D66970016D3AA /* WidgetKit.framework */,
+				110811DB2D4D66970016D3AA /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		11138E302D34501B00B6E9B6 = {
 			isa = PBXGroup;
 			children = (
 				11138E3B2D34501B00B6E9B6 /* SS2 */,
 				11138E4C2D34501C00B6E9B6 /* SS2Tests */,
 				11138E562D34501C00B6E9B6 /* SS2UITests */,
+				110811DD2D4D66970016D3AA /* GGBWidget */,
+				110811D82D4D66970016D3AA /* Frameworks */,
 				11138E3A2D34501B00B6E9B6 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -93,6 +158,7 @@
 				11138E392D34501B00B6E9B6 /* GGB Weather.app */,
 				11138E492D34501C00B6E9B6 /* GGB WeatherTests.xctest */,
 				11138E532D34501C00B6E9B6 /* GGB WeatherUITests.xctest */,
+				110811D72D4D66970016D3AA /* GGBWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -100,6 +166,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		110811D62D4D66970016D3AA /* GGBWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 110811F22D4D66980016D3AA /* Build configuration list for PBXNativeTarget "GGBWidgetExtension" */;
+			buildPhases = (
+				110811D32D4D66970016D3AA /* Sources */,
+				110811D42D4D66970016D3AA /* Frameworks */,
+				110811D52D4D66970016D3AA /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				110811DD2D4D66970016D3AA /* GGBWidget */,
+			);
+			name = GGBWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = GGBWidgetExtension;
+			productReference = 110811D72D4D66970016D3AA /* GGBWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		11138E382D34501B00B6E9B6 /* GGB Weather */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 11138E5D2D34501C00B6E9B6 /* Build configuration list for PBXNativeTarget "GGB Weather" */;
@@ -107,10 +195,12 @@
 				11138E352D34501B00B6E9B6 /* Sources */,
 				11138E362D34501B00B6E9B6 /* Frameworks */,
 				11138E372D34501B00B6E9B6 /* Resources */,
+				110811EE2D4D66980016D3AA /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				110811EC2D4D66980016D3AA /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				11138E3B2D34501B00B6E9B6 /* SS2 */,
@@ -179,6 +269,9 @@
 				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
+					110811D62D4D66970016D3AA = {
+						CreatedOnToolsVersion = 16.2;
+					};
 					11138E382D34501B00B6E9B6 = {
 						CreatedOnToolsVersion = 16.2;
 					};
@@ -212,11 +305,19 @@
 				11138E382D34501B00B6E9B6 /* GGB Weather */,
 				11138E482D34501C00B6E9B6 /* GGB WeatherTests */,
 				11138E522D34501C00B6E9B6 /* GGB WeatherUITests */,
+				110811D62D4D66970016D3AA /* GGBWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		110811D52D4D66970016D3AA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		11138E372D34501B00B6E9B6 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -241,6 +342,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		110811D32D4D66970016D3AA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		11138E352D34501B00B6E9B6 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -265,6 +373,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		110811EC2D4D66980016D3AA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 110811D62D4D66970016D3AA /* GGBWidgetExtension */;
+			targetProxy = 110811EB2D4D66980016D3AA /* PBXContainerItemProxy */;
+		};
 		11138E4B2D34501C00B6E9B6 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 11138E382D34501B00B6E9B6 /* GGB Weather */;
@@ -278,6 +391,60 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		110811EF2D4D66980016D3AA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 837Z6X9D9M;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GGBWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = GGBWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.SS2.GGBWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		110811F02D4D66980016D3AA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 837Z6X9D9M;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GGBWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = GGBWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.SS2.GGBWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		11138E5B2D34501C00B6E9B6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -534,6 +701,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		110811F22D4D66980016D3AA /* Build configuration list for PBXNativeTarget "GGBWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				110811EF2D4D66980016D3AA /* Debug */,
+				110811F02D4D66980016D3AA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		11138E342D34501B00B6E9B6 /* Build configuration list for PBXProject "GGB Weather" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
