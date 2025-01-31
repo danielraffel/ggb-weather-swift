@@ -140,7 +140,7 @@ struct GGBWidgetEntryView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Current GGB Weather")
                 .font(.caption)
-                .foregroundColor(.yellow)
+                .foregroundColor(.orange)
             
             Text("\(entry.currentWeather.temperature, specifier: "%.1f")°F")
                 .font(.system(size: 24, weight: .bold))
@@ -161,49 +161,72 @@ struct GGBWidgetEntryView: View {
     }
     
     private var mediumWidget: some View {
-        HStack(spacing: 0) {
-            // Best Time (Left)
-            VStack(alignment: .leading, spacing: 4) {
-                Text("🥇 Best Time")
-                    .font(.caption)
-                    .foregroundColor(.yellow)
-                
-                Text(formatTime(entry.bestTime.time))
-                    .font(.system(size: 24, weight: .bold))
+        VStack(spacing: 8) {
+            // Current Weather (Top)
+            VStack(spacing: 2) {
+                Text("Current Weather")
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.white)
                 
-                Text("\(entry.bestTime.temperature, specifier: "🌡️ %.1f")°F")
-                    .font(.caption)
-                    .foregroundColor(.white)
-                
-                Text("\(entry.bestTime.precipitationProbability, specifier: "🌧️ %.0f")% chance")
-                    .font(.caption)
-                    .foregroundColor(.white)
+                HStack(spacing: 12) {
+                    Text("🌡️ \(entry.currentWeather.temperature, specifier: "%.1f")°F")
+                        .font(.caption)
+                    Text("🌧 \(entry.currentWeather.precipitationProbability, specifier: "%.0f")%")
+                        .font(.caption)
+                    // Text("🌬️ \(entry.currentWeather.windSpeed, specifier: "%.1f") mph")
+                    //     .font(.caption)
+                }
+                .foregroundColor(.white)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity)
             
-            // Second Best Time (Right)
-            VStack(alignment: .trailing, spacing: 4) {
-                Text("Second Best 🥈")
-                    .font(.caption)
-                    .foregroundColor(.white)
+            // Best Times (Bottom)
+            HStack(spacing: 0) {
+                // Best Time (Left)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("🥇 Best Time")
+                        .font(.caption)
+                        .foregroundColor(.yellow)
+                        .bold()
+                    
+                    Text(formatTime(entry.bestTime.time))
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.white)
+                    
+                    Text("\(entry.bestTime.temperature, specifier: "🌡️ %.1f")°F")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                    
+                    Text("\(entry.bestTime.precipitationProbability, specifier: "🌧 %.0f")% chance")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 
-                Text(formatTime(entry.secondBestTime.time))
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.white)
-                
-                Text("\(entry.secondBestTime.temperature, specifier: "%.1f")°F 🌡️")
-                    .font(.caption)
-                    .foregroundColor(.white)
-                
-                Text("\(entry.secondBestTime.precipitationProbability, specifier: "%.0f")% chance 🌧️")
-                    .font(.caption)
-                    .foregroundColor(.white)
+                // Second Best Time (Right)
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("Second Best 🥈")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                        .bold()
+                    
+                    Text(formatTime(entry.secondBestTime.time))
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.white)
+                    
+                    Text("\(entry.secondBestTime.temperature, specifier: "%.1f")°F 🌡️")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                    
+                    Text("\(entry.secondBestTime.precipitationProbability, specifier: "%.0f")% chance 🌧️")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                }
+                .frame(maxWidth: .infinity, alignment: .trailing)
             }
-            .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding(.horizontal, 16)
-        .padding(.bottom, 12)
+        .padding(.vertical, 12)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         .containerBackground(for: .widget) {
             if let imageData = entry.imageData,
