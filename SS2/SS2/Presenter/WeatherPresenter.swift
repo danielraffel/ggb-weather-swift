@@ -67,7 +67,13 @@ class WeatherPresenter: ObservableObject {
             let sunset = try await interactor.fetchSunsetTime()
             let formatter = DateFormatter()
             formatter.dateFormat = "h:mm a"
-            sunsetTime = formatter.string(from: sunset)
+            
+            // Check if sunset is today or tomorrow
+            let calendar = Calendar.current
+            let now = Date()
+            let isToday = calendar.isDate(sunset, inSameDayAs: now)
+            
+            sunsetTime = "\(isToday ? "today" : "tomorrow") at \(formatter.string(from: sunset))"
         } catch {
             print("Error fetching sunset time: \(error)")
         }

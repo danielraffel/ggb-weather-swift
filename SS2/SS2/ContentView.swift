@@ -30,7 +30,7 @@ struct ContentView: View {
                 VStack(spacing: 16) {
                     // Sunset Info
                     if let sunset = presenter.sunsetTime {
-                        Text("Next sunset at \(sunset)")
+                        Text("Next sunset \(sunset)")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                             .padding(.top, 16)
