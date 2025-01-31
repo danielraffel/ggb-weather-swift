@@ -42,7 +42,7 @@ struct CrossingCard: View {
             HStack(spacing: 0) {  // Main spacing between all elements - adjust this for overall gaps
                 Text("in")
                     .foregroundColor(.secondary)
-                    .padding(.trailing, -20)  // Space between "in" and hours - adjust this number
+                    .padding(.trailing, -10)  // Space between "in" and hours - adjust this number
                 
                 Picker("Hours", selection: $selectedHours) {
                     ForEach(0..<24) { hour in
@@ -54,19 +54,19 @@ struct CrossingCard: View {
                 }
                 .pickerStyle(.menu)
                 .frame(width: 90)  // Width of hour picker
-                .padding(.trailing, -30)  // Space between hour picker and minutes in this case negative
+                .padding(.trailing, -36)  // Space between hour picker and minutes in this case negative
                 
                 Picker("Minutes", selection: $selectedMinutes) {
                     ForEach(0..<60) { minute in
                         Text("\(minute)m")
                             .monospacedDigit()
                             .fixedSize()  // Prevents "m" from wrapping
-                            .frame(width: 100, alignment: .leading)  // Width of minute picker
+                            .frame(width: 105, alignment: .leading)  // Width of minute picker
                             .tag(minute)
                     }
                 }
                 .pickerStyle(.menu)
-                .frame(width: 95)  // Width of minute picker
+                .frame(width: 110)  // Width of minute picker
                 .padding(.trailing, -25)  // Space between minute picker and "at"
                 
                 Text("at")
