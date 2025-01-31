@@ -42,6 +42,7 @@ struct ContentView: View {
                         crossingTime: $presenter.firstCrossing,
                         weather: presenter.firstCrossingWeather,
                         baseDate: presenter.firstCrossingBaseDate,
+                        isRestoringFromBackground: presenter.isRestoringFromBackground,
                         onTimeChange: { newTime in
                             presenter.updateFirstCrossing(to: newTime)
                         }

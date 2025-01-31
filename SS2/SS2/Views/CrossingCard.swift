@@ -9,18 +9,20 @@ struct CrossingCard: View {
     let weather: CrossingWeather?
     let onTimeChange: (Date) -> Void
     let baseDate: Date  // Base date for calculating time diff
+    let isRestoringFromBackground: Bool  // Add this
     
     @State private var selectedHours: Int
     @State private var selectedMinutes: Int
     @State private var selectedTime: Date
     @State private var debounceTimer: Timer?
     
-    init(title: String, crossingTime: Binding<CrossingTime>, weather: CrossingWeather?, baseDate: Date, onTimeChange: @escaping (Date) -> Void) {
+    init(title: String, crossingTime: Binding<CrossingTime>, weather: CrossingWeather?, baseDate: Date, isRestoringFromBackground: Bool = false, onTimeChange: @escaping (Date) -> Void) {
         self.title = title
         self._crossingTime = crossingTime
         self.weather = weather
         self.baseDate = baseDate
         self.onTimeChange = onTimeChange
+        self.isRestoringFromBackground = isRestoringFromBackground
         
         // Initialize state with current crossing time values
         let timeDiff = crossingTime.wrappedValue.timeDiff
@@ -52,14 +54,14 @@ struct CrossingCard: View {
                 }
                 .pickerStyle(.menu)
                 .frame(width: 90)  // Width of hour picker
-                .padding(.trailing, -35)  // Space between hour picker and minutes in this case negative
+                .padding(.trailing, -30)  // Space between hour picker and minutes in this case negative
                 
                 Picker("Minutes", selection: $selectedMinutes) {
                     ForEach(0..<60) { minute in
                         Text("\(minute)m")
                             .monospacedDigit()
                             .fixedSize()  // Prevents "m" from wrapping
-                            .frame(width: 60, alignment: .leading)  // Width of minute picker
+                            .frame(width: 100, alignment: .leading)  // Width of minute picker
                             .tag(minute)
                     }
                 }
