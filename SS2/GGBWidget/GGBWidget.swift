@@ -10,6 +10,13 @@ import SwiftUI
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> WeatherEntry {
+        let placeholderWeather = WeatherData(
+            time: Date(),
+            temperature: 47.1,
+            cloudCover: 99.0,
+            windSpeed: 3.4,
+            precipitationProbability: 6.0
+        )
         let placeholderTime = BestVisitTime(
             time: Date(),
             temperature: 47.1,
@@ -20,6 +27,7 @@ struct Provider: TimelineProvider {
         )
         return WeatherEntry(
             date: Date(),
+            currentWeather: placeholderWeather,
             bestTime: placeholderTime,
             secondBestTime: placeholderTime,
             imageData: nil
@@ -38,10 +46,14 @@ struct Provider: TimelineProvider {
                 let weatherData = try await interactor.fetchWeatherData()
                 let imageData = try? await fetchBridgeImage()
                 
-                // Calculate best time using existing logic
+                // Get current weather
+                let currentWeather = findCurrentWeather(from: weatherData)
+                
+                // Calculate best times
                 let bestTimes = calculateBestTimes(from: weatherData)
                 let entry = WeatherEntry(
                     date: Date(),
+                    currentWeather: currentWeather,
                     bestTime: bestTimes[0],
                     secondBestTime: bestTimes[1],
                     imageData: imageData
@@ -84,10 +96,28 @@ struct Provider: TimelineProvider {
             )
         }.sorted { $0.score > $1.score }
     }
+    
+    private func findCurrentWeather(from weatherData: [WeatherData]) -> WeatherData {
+        let now = Date()
+        let calendar = Calendar.current
+        
+        // First try to find exact hour match
+        if let exactMatch = weatherData.first(where: { data in
+            calendar.compare(data.time, to: now, toGranularity: .hour) == .orderedSame
+        }) {
+            return exactMatch
+        }
+        
+        // If no exact match, find closest time
+        return weatherData.min(by: { a, b in
+            abs(a.time.timeIntervalSince(now)) < abs(b.time.timeIntervalSince(now))
+        }) ?? weatherData[0]
+    }
 }
 
 struct WeatherEntry: TimelineEntry {
     let date: Date
+    let currentWeather: WeatherData
     let bestTime: BestVisitTime
     let secondBestTime: BestVisitTime
     let imageData: Data?
@@ -95,8 +125,42 @@ struct WeatherEntry: TimelineEntry {
 
 struct GGBWidgetEntryView: View {
     var entry: Provider.Entry
+    @Environment(\.widgetFamily) var family
     
     var body: some View {
+        switch family {
+        case .systemSmall:
+            smallWidget
+        default:
+            mediumWidget
+        }
+    }
+    
+    private var smallWidget: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Current GGB Weather")
+                .font(.caption)
+                .foregroundColor(.yellow)
+            
+            Text("\(entry.currentWeather.temperature, specifier: "%.1f")°F")
+                .font(.system(size: 24, weight: .bold))
+                .foregroundColor(.white)
+            
+            Text("🌧 \(entry.currentWeather.precipitationProbability, specifier: "%.0f")%")
+                .font(.caption)
+                .foregroundColor(.white)
+            
+            Text("🌬️ \(entry.currentWeather.windSpeed, specifier: "%.1f") mph")
+                .font(.caption)
+                .foregroundColor(.white)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .containerBackground(for: .widget) {
+            Color.black.opacity(0.8)
+        }
+    }
+    
+    private var mediumWidget: some View {
         HStack(spacing: 0) {
             // Best Time (Left)
             VStack(alignment: .leading, spacing: 4) {
