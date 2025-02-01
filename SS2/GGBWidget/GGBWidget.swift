@@ -14,16 +14,26 @@ struct Provider: TimelineProvider {
             time: Date(),
             temperature: 47.1,
             cloudCover: 99.0,
-            windSpeed: 3.4,
+            windSpeed: 5.4,
             precipitationProbability: 6.0
         )
-        let placeholderTime = BestVisitTime(
-            time: Date(),
-            temperature: 47.1,
-            precipitationProbability: 6.0,
+        
+        let bestPlaceholderTime = BestVisitTime(
+            time: createDate(from: "12:00 PM"),
+            temperature: 50.1,
+            precipitationProbability: 3.0,
             cloudCover: 99.0,
             windSpeed: 3.4,
             score: 0
+        )
+        
+        let secondBestPlaceholderTime = BestVisitTime(
+            time: createDate(from: "1:00 PM"),
+            temperature: 48.0,
+            precipitationProbability: 2.0,
+            cloudCover: 90.0,
+            windSpeed: 4.0,
+            score: 5
         )
         
         // Load placeholder image from bundle
@@ -33,8 +43,8 @@ struct Provider: TimelineProvider {
             return WeatherEntry(
                 date: Date(),
                 currentWeather: placeholderWeather,
-                bestTime: placeholderTime,
-                secondBestTime: placeholderTime,
+                bestTime: bestPlaceholderTime,
+                secondBestTime: secondBestPlaceholderTime, // Use distinct second best time
                 imageData: imageData
             )
         }
@@ -42,10 +52,17 @@ struct Provider: TimelineProvider {
         return WeatherEntry(
             date: Date(),
             currentWeather: placeholderWeather,
-            bestTime: placeholderTime,
-            secondBestTime: placeholderTime,
+            bestTime: bestPlaceholderTime,
+            secondBestTime: secondBestPlaceholderTime,
             imageData: nil
         )
+    }
+    
+    private func createDate(from timeString: String) -> Date {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "h:mm a"
+        dateFormatter.timeZone = TimeZone(identifier: "America/Los_Angeles")
+        return dateFormatter.date(from: timeString) ?? Date() // Fallback to current date if parsing fails
     }
     
     func getSnapshot(in context: Context, completion: @escaping (WeatherEntry) -> ()) {
