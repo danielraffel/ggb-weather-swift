@@ -91,7 +91,7 @@ struct Provider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<WeatherEntry>) -> ()) {
         Task {
             do {
-                let interactor = WeatherInteractor()
+                let interactor = await WeatherInteractor()
                 let weatherData = try await interactor.fetchWeatherData()
                 let imageData = try? await fetchBridgeImage()
                 
