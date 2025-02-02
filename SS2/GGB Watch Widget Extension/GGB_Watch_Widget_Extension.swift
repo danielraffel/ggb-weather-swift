@@ -38,16 +38,8 @@ final class WeatherInteractor: @unchecked Sendable {
         
         let (data, _) = try await URLSession.shared.data(from: url)
         let decoder = JSONDecoder()
-        let formatter = self.dateFormatter
-        
-        decoder.dateDecodingStrategy = .custom { decoder in
-            let container = try decoder.singleValueContainer()
-            let dateString = try container.decode(String.self)
-            if let date = formatter.date(from: dateString) {
-                return date
-            }
-            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid date format")
-        }
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        decoder.dateDecodingStrategy = .iso8601
         
         let response = try decoder.decode(WeatherResponse.self, from: data)
         let hourly = response.hourly
@@ -101,11 +93,16 @@ struct Provider: TimelineProvider {
     
     func getSnapshot(in context: Context, completion: @escaping (WeatherEntry) -> ()) {
         Task {
+            if context.isPreview {
+                completion(placeholder(in: context))
+                return
+            }
+            
             do {
                 let interactor = await WeatherInteractor()
                 let weatherData = try await interactor.fetchWeatherData()
-                let imageData = try? await fetchBridgeImage()
                 let currentWeather = await findCurrentWeather(from: weatherData)
+                let imageData = try? await fetchBridgeImage()
                 
                 let entry = WeatherEntry(
                     date: Date(),
@@ -114,6 +111,7 @@ struct Provider: TimelineProvider {
                 )
                 completion(entry)
             } catch {
+                print("Snapshot error: \(error)")
                 completion(placeholder(in: context))
             }
         }
@@ -122,10 +120,15 @@ struct Provider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<WeatherEntry>) -> ()) {
         Task {
             do {
+                print("Starting timeline fetch...")
                 let interactor = await WeatherInteractor()
                 let weatherData = try await interactor.fetchWeatherData()
-                let imageData = try? await fetchBridgeImage()
+                print("Weather data fetched: \(weatherData.count) entries")
+                print("First weather entry: \(weatherData[0])")
                 let currentWeather = await findCurrentWeather(from: weatherData)
+                print("Current weather: \(currentWeather.temperature)°F")
+                let imageData = try? await fetchBridgeImage()
+                print("Image data fetched: \(imageData?.count ?? 0) bytes")
                 
                 let entry = WeatherEntry(
                     date: Date(),
@@ -135,20 +138,24 @@ struct Provider: TimelineProvider {
                 
                 let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
                 let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
+                print("Timeline created successfully")
                 completion(timeline)
             } catch {
+                print("Timeline error: \(error.localizedDescription)")
+                print("Full error: \(error)")
                 completion(Timeline(entries: [placeholder(in: context)], policy: .after(Date(timeIntervalSinceNow: 3600))))
             }
         }
     }
     
     private func fetchBridgeImage() async throws -> Data {
-        let url = URL(string: "https://raw.githubusercontent.com/danielraffel/ggb/main/ggb.jpg")!
+        let url = URL(string: "https://raw.githubusercontent.com/danielraffel/ggb/main/ggb.screenshot.png")!
         let (data, response) = try await URLSession.shared.data(from: url)
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else {
             throw URLError(.badServerResponse)
         }
+        print("Image fetch response code: \(httpResponse.statusCode)")
         return data
     }
     
@@ -190,28 +197,25 @@ struct GGBWatchWidgetEntryView: View {
     }
     
     private var rectangularView: some View {
-        ZStack {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("\(entry.currentWeather.temperature, specifier: "%.1f")°F")
+                .font(.system(size: 20, weight: .bold))
+            Text("🌧 \(entry.currentWeather.precipitationProbability, specifier: "%.0f")%")
+                .font(.caption2)
+            Text("🌬️ \(entry.currentWeather.windSpeed, specifier: "%.1f") mph")
+                .font(.caption2)
+        }
+        .foregroundColor(.white)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .padding()
+        .containerBackground(for: .widget) {
             if let imageData = entry.imageData,
                let uiImage = UIImage(data: imageData) {
                 Image(uiImage: uiImage)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .clipped()
                     .overlay(Color.black.opacity(0.4))
             }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text("\(entry.currentWeather.temperature, specifier: "%.1f")°F")
-                    .font(.system(size: 20, weight: .bold))
-                Text("🌧 \(entry.currentWeather.precipitationProbability, specifier: "%.0f")%")
-                    .font(.caption2)
-                Text("🌬️ \(entry.currentWeather.windSpeed, specifier: "%.1f") mph")
-                    .font(.caption2)
-            }
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .padding()
         }
     }
 }
@@ -222,15 +226,10 @@ struct GGBWatchWidget: Widget {
     
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
-            if #available(watchOS 10.0, *) {
-                GGBWatchWidgetEntryView(entry: entry)
-                    .containerBackground(.black.gradient, for: .widget)
-            } else {
-                GGBWatchWidgetEntryView(entry: entry)
-            }
+            GGBWatchWidgetEntryView(entry: entry)
         }
         .configurationDisplayName("GGB Weather")
         .description("Current Golden Gate Bridge weather")
-        .supportedFamilies([.accessoryCircular, .accessoryRectangular, .accessoryInline, .accessoryCorner])
+        .supportedFamilies([.accessoryRectangular])
     }
 }
