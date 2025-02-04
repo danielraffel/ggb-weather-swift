@@ -16,8 +16,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "118B433D2D4EC7B7004288CA"
-               BuildableName = "GGB Watch App Watch App.app"
-               BlueprintName = "GGB Watch App Watch App"
+               BuildableName = "GGB Watch App.app"
+               BlueprintName = "GGB Watch App"
                ReferencedContainer = "container:GGB Weather.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -83,8 +83,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "118B433D2D4EC7B7004288CA"
-            BuildableName = "GGB Watch App Watch App.app"
-            BlueprintName = "GGB Watch App Watch App"
+            BuildableName = "GGB Watch App.app"
+            BlueprintName = "GGB Watch App"
             ReferencedContainer = "container:GGB Weather.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -100,8 +100,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "118B433D2D4EC7B7004288CA"
-            BuildableName = "GGB Watch App Watch App.app"
-            BlueprintName = "GGB Watch App Watch App"
+            BuildableName = "GGB Watch App.app"
+            BlueprintName = "GGB Watch App"
             ReferencedContainer = "container:GGB Weather.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

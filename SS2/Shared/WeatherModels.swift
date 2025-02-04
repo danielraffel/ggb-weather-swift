@@ -1,6 +1,6 @@
 import Foundation
 
-public struct WeatherData: Identifiable {
+public struct WeatherData: Identifiable, Codable {
     public let id = UUID()
     public let time: Date
     public let temperature: Double
@@ -14,6 +14,10 @@ public struct WeatherData: Identifiable {
         self.cloudCover = cloudCover
         self.windSpeed = windSpeed
         self.precipitationProbability = precipitationProbability
+    }
+    
+    private enum CodingKeys: String, CodingKey {
+        case id, time, temperature, cloudCover, windSpeed, precipitationProbability
     }
 }
 

@@ -10,6 +10,7 @@ class WeatherInteractor: WeatherInteractorProtocol {
     private let weatherBaseURL = "https://api.open-meteo.com/v1/forecast"
     private let latitude = 37.8199
     private let longitude = -122.4783
+    private let sharedDataInteractor: SharedDataInteractorProtocol
     
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -18,7 +19,19 @@ class WeatherInteractor: WeatherInteractorProtocol {
         return formatter
     }()
     
+    init(sharedDataInteractor: SharedDataInteractorProtocol = SharedDataInteractor()) {
+        self.sharedDataInteractor = sharedDataInteractor
+    }
+    
     func fetchWeatherData() async throws -> [WeatherData] {
+        let weatherData = try await fetchWeatherFromAPI()
+        // Save to shared cache
+        let cachedData = CachedWeatherData(weatherData: weatherData)
+        try await sharedDataInteractor.saveWeatherData(cachedData)
+        return weatherData
+    }
+    
+    private func fetchWeatherFromAPI() async throws -> [WeatherData] {
         let urlString = "\(weatherBaseURL)?latitude=\(latitude)&longitude=\(longitude)&hourly=temperature_2m,cloudcover,windspeed_10m,precipitation_probability&timezone=America/Los_Angeles&forecast_days=1&temperature_unit=fahrenheit"
         
         guard let url = URL(string: urlString) else {

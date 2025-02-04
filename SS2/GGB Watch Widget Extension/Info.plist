@@ -11,6 +11,20 @@
 	<dict>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.widgetkit-extension</string>
+		<key>CLKComplicationPrincipalClass</key>
+		<string>$(PRODUCT_MODULE_NAME).ComplicationController</string>
+		<key>CLKComplicationSupportedFamilies</key>
+		<array>
+			<string>CLKComplicationFamilyCircularSmall</string>
+			<string>CLKComplicationFamilyModularSmall</string>
+			<string>CLKComplicationFamilyUtilitarianSmall</string>
+			<string>CLKComplicationFamilyExtraLarge</string>
+			<string>CLKComplicationFamilyGraphicCircular</string>
+			<string>CLKComplicationFamilyGraphicRectangular</string>
+			<string>CLKComplicationFamilyGraphicCorner</string>
+		</array>
+		<key>WKWatchOnly</key>
+		<true/>
 	</dict>
 	<key>Privacy - Network Usage Description</key>
 	<string>Fetches weather data and bridge image</string>

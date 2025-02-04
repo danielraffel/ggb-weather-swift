@@ -7,6 +7,8 @@ import Foundation
 public protocol WeatherInteractorProtocol {
     func fetchWeatherData() async throws -> [WeatherData]
     func fetchSunsetTime() async throws -> Date
+    func fetchAndCacheWeatherData() async throws -> [WeatherData]
+    func loadCachedWeatherData() async throws -> [WeatherData]
 }
 
 @MainActor
@@ -15,8 +17,10 @@ final class WeatherInteractor: @unchecked Sendable, WeatherInteractorProtocol {
     private let latitude = 37.8199
     private let longitude = -122.4783
     private let dateFormatter: DateFormatter
+    private let sharedDataInteractor: SharedDataInteractorProtocol
     
-    init() {
+    init(sharedDataInteractor: SharedDataInteractorProtocol = SharedDataInteractor()) {
+        self.sharedDataInteractor = sharedDataInteractor
         dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm"
         dateFormatter.timeZone = TimeZone(identifier: "America/Los_Angeles")
@@ -85,6 +89,22 @@ final class WeatherInteractor: @unchecked Sendable, WeatherInteractorProtocol {
                 precipitationProbability: hourly.precipitationProbability[index]
             )
         }
+    }
+    
+    @WeatherActor
+    public func fetchAndCacheWeatherData() async throws -> [WeatherData] {
+        let weatherData = try await fetchWeatherData()
+        let cachedData = CachedWeatherData(weatherData: weatherData)
+        try await sharedDataInteractor.saveWeatherData(cachedData)
+        return weatherData
+    }
+    
+    @WeatherActor
+    public func loadCachedWeatherData() async throws -> [WeatherData] {
+        guard let cachedData = try await sharedDataInteractor.loadWeatherData() else {
+            throw SharedDataError.cacheEmpty
+        }
+        return cachedData.weatherData
     }
 }
 

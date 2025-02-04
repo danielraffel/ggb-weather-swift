@@ -10,12 +10,22 @@
 		110811DA2D4D66970016D3AA /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 110811D92D4D66970016D3AA /* WidgetKit.framework */; };
 		110811DC2D4D66970016D3AA /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 110811DB2D4D66970016D3AA /* SwiftUI.framework */; };
 		110811ED2D4D66980016D3AA /* GGBWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 110811D72D4D66970016D3AA /* GGBWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		114698952D5147AB00678349 /* SharedCacheModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114698932D5147AB00678349 /* SharedCacheModels.swift */; };
+		114698962D5147AB00678349 /* SharedDataInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114698942D5147AB00678349 /* SharedDataInteractor.swift */; };
+		114698972D5147AB00678349 /* SharedCacheModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114698932D5147AB00678349 /* SharedCacheModels.swift */; };
+		114698982D5147AB00678349 /* SharedDataInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114698942D5147AB00678349 /* SharedDataInteractor.swift */; };
+		114698992D5147AB00678349 /* SharedCacheModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114698932D5147AB00678349 /* SharedCacheModels.swift */; };
+		1146989A2D5147AB00678349 /* SharedDataInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114698942D5147AB00678349 /* SharedDataInteractor.swift */; };
+		1146989B2D5147AB00678349 /* SharedCacheModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114698932D5147AB00678349 /* SharedCacheModels.swift */; };
+		1146989C2D5147AB00678349 /* SharedDataInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114698942D5147AB00678349 /* SharedDataInteractor.swift */; };
+		1146989D2D51481D00678349 /* WeatherInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 118B43322D4EBE22004288CA /* WeatherInteractor.swift */; };
+		1146989E2D51481D00678349 /* WeatherModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 118B43332D4EBE22004288CA /* WeatherModels.swift */; };
 		118B43362D4EBE22004288CA /* WeatherInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 118B43322D4EBE22004288CA /* WeatherInteractor.swift */; };
 		118B43372D4EBE22004288CA /* WeatherModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 118B43332D4EBE22004288CA /* WeatherModels.swift */; };
-		118B43612D4EC7B8004288CA /* GGB Watch App Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 118B433E2D4EC7B7004288CA /* GGB Watch App Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		118B43612D4EC7B8004288CA /* GGB Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 118B433E2D4EC7B7004288CA /* GGB Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		118B43712D4EC7D4004288CA /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 110811D92D4D66970016D3AA /* WidgetKit.framework */; };
 		118B43722D4EC7D4004288CA /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 110811DB2D4D66970016D3AA /* SwiftUI.framework */; };
-		118B437D2D4EC7D5004288CA /* GGB Watch Widget ExtensionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 118B43702D4EC7D4004288CA /* GGB Watch Widget ExtensionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		118B437D2D4EC7D5004288CA /* GGB Watch Widget Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 118B43702D4EC7D4004288CA /* GGB Watch Widget Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		118B43842D4EC859004288CA /* WeatherInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 118B43322D4EBE22004288CA /* WeatherInteractor.swift */; };
 		118B43852D4EC859004288CA /* WeatherInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 118B43322D4EBE22004288CA /* WeatherInteractor.swift */; };
 		118B43862D4EC861004288CA /* WeatherModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 118B43332D4EBE22004288CA /* WeatherModels.swift */; };
@@ -93,7 +103,7 @@
 			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
 			dstSubfolderSpec = 16;
 			files = (
-				118B43612D4EC7B8004288CA /* GGB Watch App Watch App.app in Embed Watch Content */,
+				118B43612D4EC7B8004288CA /* GGB Watch App.app in Embed Watch Content */,
 			);
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -104,7 +114,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				118B437D2D4EC7D5004288CA /* GGB Watch Widget ExtensionExtension.appex in Embed Foundation Extensions */,
+				118B437D2D4EC7D5004288CA /* GGB Watch Widget Extension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -118,12 +128,17 @@
 		11138E392D34501B00B6E9B6 /* GGB Weather.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "GGB Weather.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		11138E492D34501C00B6E9B6 /* GGB WeatherTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "GGB WeatherTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		11138E532D34501C00B6E9B6 /* GGB WeatherUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "GGB WeatherUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		114698932D5147AB00678349 /* SharedCacheModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedCacheModels.swift; sourceTree = "<group>"; };
+		114698942D5147AB00678349 /* SharedDataInteractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedDataInteractor.swift; sourceTree = "<group>"; };
+		114698A32D51542B00678349 /* GGB Weather.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "GGB Weather.entitlements"; sourceTree = "<group>"; };
+		114698A42D51543200678349 /* GGBWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = GGBWidgetExtension.entitlements; sourceTree = "<group>"; };
+		114698A52D5155B900678349 /* GGB-Weather-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "GGB-Weather-Info.plist"; sourceTree = "<group>"; };
 		118B43322D4EBE22004288CA /* WeatherInteractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherInteractor.swift; sourceTree = "<group>"; };
 		118B43332D4EBE22004288CA /* WeatherModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherModels.swift; sourceTree = "<group>"; };
-		118B433E2D4EC7B7004288CA /* GGB Watch App Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "GGB Watch App Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		118B433E2D4EC7B7004288CA /* GGB Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "GGB Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		118B434D2D4EC7B8004288CA /* GGB Watch App Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "GGB Watch App Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		118B43572D4EC7B8004288CA /* GGB Watch App Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "GGB Watch App Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		118B43702D4EC7D4004288CA /* GGB Watch Widget ExtensionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "GGB Watch Widget ExtensionExtension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		118B43702D4EC7D4004288CA /* GGB Watch Widget Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "GGB Watch Widget Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -141,12 +156,12 @@
 			);
 			target = 110811D62D4D66970016D3AA /* GGBWidgetExtension */;
 		};
-		118B437E2D4EC7D5004288CA /* Exceptions for "GGB Watch Widget Extension" folder in "GGB Watch Widget ExtensionExtension" target */ = {
+		118B437E2D4EC7D5004288CA /* Exceptions for "GGB Watch Widget Extension" folder in "GGB Watch Widget Extension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = 118B436F2D4EC7D4004288CA /* GGB Watch Widget ExtensionExtension */;
+			target = 118B436F2D4EC7D4004288CA /* GGB Watch Widget Extension */;
 		};
 		118B438E2D4EF886004288CA /* Exceptions for "SS2" folder in "GGB Weather" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -204,7 +219,7 @@
 		118B43732D4EC7D4004288CA /* GGB Watch Widget Extension */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				118B437E2D4EC7D5004288CA /* Exceptions for "GGB Watch Widget Extension" folder in "GGB Watch Widget ExtensionExtension" target */,
+				118B437E2D4EC7D5004288CA /* Exceptions for "GGB Watch Widget Extension" folder in "GGB Watch Widget Extension" target */,
 			);
 			path = "GGB Watch Widget Extension";
 			sourceTree = "<group>";
@@ -288,6 +303,9 @@
 		11138E302D34501B00B6E9B6 = {
 			isa = PBXGroup;
 			children = (
+				114698A52D5155B900678349 /* GGB-Weather-Info.plist */,
+				114698A42D51543200678349 /* GGBWidgetExtension.entitlements */,
+				114698A32D51542B00678349 /* GGB Weather.entitlements */,
 				118B43832D4EC81E004288CA /* Shared */,
 				11138E3B2D34501B00B6E9B6 /* SS2 */,
 				11138E4C2D34501C00B6E9B6 /* SS2Tests */,
@@ -309,10 +327,10 @@
 				11138E492D34501C00B6E9B6 /* GGB WeatherTests.xctest */,
 				11138E532D34501C00B6E9B6 /* GGB WeatherUITests.xctest */,
 				110811D72D4D66970016D3AA /* GGBWidgetExtension.appex */,
-				118B433E2D4EC7B7004288CA /* GGB Watch App Watch App.app */,
+				118B433E2D4EC7B7004288CA /* GGB Watch App.app */,
 				118B434D2D4EC7B8004288CA /* GGB Watch App Watch AppTests.xctest */,
 				118B43572D4EC7B8004288CA /* GGB Watch App Watch AppUITests.xctest */,
-				118B43702D4EC7D4004288CA /* GGB Watch Widget ExtensionExtension.appex */,
+				118B43702D4EC7D4004288CA /* GGB Watch Widget Extension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -320,6 +338,8 @@
 		118B43832D4EC81E004288CA /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				114698932D5147AB00678349 /* SharedCacheModels.swift */,
+				114698942D5147AB00678349 /* SharedDataInteractor.swift */,
 				118B43322D4EBE22004288CA /* WeatherInteractor.swift */,
 				118B43332D4EBE22004288CA /* WeatherModels.swift */,
 			);
@@ -424,9 +444,9 @@
 			productReference = 11138E532D34501C00B6E9B6 /* GGB WeatherUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
-		118B433D2D4EC7B7004288CA /* GGB Watch App Watch App */ = {
+		118B433D2D4EC7B7004288CA /* GGB Watch App */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 118B43692D4EC7B8004288CA /* Build configuration list for PBXNativeTarget "GGB Watch App Watch App" */;
+			buildConfigurationList = 118B43692D4EC7B8004288CA /* Build configuration list for PBXNativeTarget "GGB Watch App" */;
 			buildPhases = (
 				118B433A2D4EC7B7004288CA /* Sources */,
 				118B433B2D4EC7B7004288CA /* Frameworks */,
@@ -441,11 +461,11 @@
 			fileSystemSynchronizedGroups = (
 				118B433F2D4EC7B7004288CA /* GGB Watch App Watch App */,
 			);
-			name = "GGB Watch App Watch App";
+			name = "GGB Watch App";
 			packageProductDependencies = (
 			);
 			productName = "GGB Watch App Watch App";
-			productReference = 118B433E2D4EC7B7004288CA /* GGB Watch App Watch App.app */;
+			productReference = 118B433E2D4EC7B7004288CA /* GGB Watch App.app */;
 			productType = "com.apple.product-type.application";
 		};
 		118B434C2D4EC7B8004288CA /* GGB Watch App Watch AppTests */ = {
@@ -494,9 +514,9 @@
 			productReference = 118B43572D4EC7B8004288CA /* GGB Watch App Watch AppUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
-		118B436F2D4EC7D4004288CA /* GGB Watch Widget ExtensionExtension */ = {
+		118B436F2D4EC7D4004288CA /* GGB Watch Widget Extension */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 118B437F2D4EC7D5004288CA /* Build configuration list for PBXNativeTarget "GGB Watch Widget ExtensionExtension" */;
+			buildConfigurationList = 118B437F2D4EC7D5004288CA /* Build configuration list for PBXNativeTarget "GGB Watch Widget Extension" */;
 			buildPhases = (
 				118B436C2D4EC7D4004288CA /* Sources */,
 				118B436D2D4EC7D4004288CA /* Frameworks */,
@@ -509,11 +529,11 @@
 			fileSystemSynchronizedGroups = (
 				118B43732D4EC7D4004288CA /* GGB Watch Widget Extension */,
 			);
-			name = "GGB Watch Widget ExtensionExtension";
+			name = "GGB Watch Widget Extension";
 			packageProductDependencies = (
 			);
 			productName = "GGB Watch Widget ExtensionExtension";
-			productReference = 118B43702D4EC7D4004288CA /* GGB Watch Widget ExtensionExtension.appex */;
+			productReference = 118B43702D4EC7D4004288CA /* GGB Watch Widget Extension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
@@ -577,10 +597,10 @@
 				11138E482D34501C00B6E9B6 /* GGB WeatherTests */,
 				11138E522D34501C00B6E9B6 /* GGB WeatherUITests */,
 				110811D62D4D66970016D3AA /* GGBWidgetExtension */,
-				118B433D2D4EC7B7004288CA /* GGB Watch App Watch App */,
+				118B433D2D4EC7B7004288CA /* GGB Watch App */,
 				118B434C2D4EC7B8004288CA /* GGB Watch App Watch AppTests */,
 				118B43562D4EC7B8004288CA /* GGB Watch App Watch AppUITests */,
-				118B436F2D4EC7D4004288CA /* GGB Watch Widget ExtensionExtension */,
+				118B436F2D4EC7D4004288CA /* GGB Watch Widget Extension */,
 			);
 		};
 /* End PBXProject section */
@@ -651,6 +671,8 @@
 			files = (
 				118B43362D4EBE22004288CA /* WeatherInteractor.swift in Sources */,
 				118B43372D4EBE22004288CA /* WeatherModels.swift in Sources */,
+				114698952D5147AB00678349 /* SharedCacheModels.swift in Sources */,
+				114698962D5147AB00678349 /* SharedDataInteractor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -658,6 +680,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				114698992D5147AB00678349 /* SharedCacheModels.swift in Sources */,
+				1146989A2D5147AB00678349 /* SharedDataInteractor.swift in Sources */,
 				118B43862D4EC861004288CA /* WeatherModels.swift in Sources */,
 				118B43842D4EC859004288CA /* WeatherInteractor.swift in Sources */,
 			);
@@ -682,6 +706,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				118B43872D4EC861004288CA /* WeatherModels.swift in Sources */,
+				1146989B2D5147AB00678349 /* SharedCacheModels.swift in Sources */,
+				1146989C2D5147AB00678349 /* SharedDataInteractor.swift in Sources */,
 				118B43852D4EC859004288CA /* WeatherInteractor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -704,6 +730,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1146989D2D51481D00678349 /* WeatherInteractor.swift in Sources */,
+				1146989E2D51481D00678349 /* WeatherModels.swift in Sources */,
+				114698972D5147AB00678349 /* SharedCacheModels.swift in Sources */,
+				114698982D5147AB00678349 /* SharedDataInteractor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -727,22 +757,22 @@
 		};
 		118B434F2D4EC7B8004288CA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 118B433D2D4EC7B7004288CA /* GGB Watch App Watch App */;
+			target = 118B433D2D4EC7B7004288CA /* GGB Watch App */;
 			targetProxy = 118B434E2D4EC7B8004288CA /* PBXContainerItemProxy */;
 		};
 		118B43592D4EC7B8004288CA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 118B433D2D4EC7B7004288CA /* GGB Watch App Watch App */;
+			target = 118B433D2D4EC7B7004288CA /* GGB Watch App */;
 			targetProxy = 118B43582D4EC7B8004288CA /* PBXContainerItemProxy */;
 		};
 		118B43602D4EC7B8004288CA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 118B433D2D4EC7B7004288CA /* GGB Watch App Watch App */;
+			target = 118B433D2D4EC7B7004288CA /* GGB Watch App */;
 			targetProxy = 118B435F2D4EC7B8004288CA /* PBXContainerItemProxy */;
 		};
 		118B437C2D4EC7D5004288CA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 118B436F2D4EC7D4004288CA /* GGB Watch Widget ExtensionExtension */;
+			target = 118B436F2D4EC7D4004288CA /* GGB Watch Widget Extension */;
 			targetProxy = 118B437B2D4EC7D5004288CA /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -753,6 +783,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = GGBWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 837Z6X9D9M;
@@ -780,6 +811,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = GGBWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 837Z6X9D9M;
@@ -926,12 +958,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "GGB Weather.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"SS2/Preview Content\"";
 				DEVELOPMENT_TEAM = 837Z6X9D9M;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "GGB-Weather-Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -959,12 +993,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "GGB Weather.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"SS2/Preview Content\"";
 				DEVELOPMENT_TEAM = 837Z6X9D9M;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "GGB-Weather-Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -1060,6 +1096,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "GGB Watch App Watch App/GGB Watch App Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"GGB Watch App Watch App/Preview Content\"";
@@ -1091,6 +1128,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "GGB Watch App Watch App/GGB Watch App Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"GGB Watch App Watch App/Preview Content\"";
@@ -1200,6 +1238,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = "GGB Watch Widget Extension/GGB Watch Widget Extension.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 837Z6X9D9M;
@@ -1230,6 +1269,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = "GGB Watch Widget Extension/GGB Watch Widget Extension.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 837Z6X9D9M;
@@ -1303,7 +1343,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		118B43692D4EC7B8004288CA /* Build configuration list for PBXNativeTarget "GGB Watch App Watch App" */ = {
+		118B43692D4EC7B8004288CA /* Build configuration list for PBXNativeTarget "GGB Watch App" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				118B43632D4EC7B8004288CA /* Debug */,
@@ -1330,7 +1370,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		118B437F2D4EC7D5004288CA /* Build configuration list for PBXNativeTarget "GGB Watch Widget ExtensionExtension" */ = {
+		118B437F2D4EC7D5004288CA /* Build configuration list for PBXNativeTarget "GGB Watch Widget Extension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				118B43802D4EC7D5004288CA /* Debug */,
