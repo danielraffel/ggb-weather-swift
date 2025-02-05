@@ -4,7 +4,7 @@
 <dict>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.generouscorp.SS2.ggbweather</string>
+		<string>group.genco</string>
 	</array>
 </dict>
 </plist>

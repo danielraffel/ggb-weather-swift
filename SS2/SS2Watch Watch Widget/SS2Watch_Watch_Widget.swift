@@ -3,7 +3,7 @@ import SwiftUI
 import os
 
 struct Provider: TimelineProvider {
-    private let logger = Logger(subsystem: "generouscorp.SS2.ggbweather", category: "WatchWidget")
+    private let logger = Logger(subsystem: "generouscorp.ggb.ggbweather", category: "WatchWidget")
     private let dataInteractor = SharedDataInteractor()
     
     func placeholder(in context: Context) -> WeatherEntry {

@@ -94,9 +94,25 @@ final class WeatherInteractor: @unchecked Sendable, WeatherInteractorProtocol {
     @WeatherActor
     public func fetchAndCacheWeatherData() async throws -> [WeatherData] {
         let weatherData = try await fetchWeatherData()
-        let cachedData = CachedWeatherData(weatherData: weatherData)
+        
+        // Fetch bridge image
+        let bridgeImageData = try? await fetchBridgeImage()
+        
+        // Cache both weather data and bridge image
+        let cachedData = CachedWeatherData(
+            weatherData: weatherData,
+            timestamp: Date(),
+            bridgeImage: bridgeImageData
+        )
         try await sharedDataInteractor.saveWeatherData(cachedData)
         return weatherData
+    }
+    
+    @WeatherActor
+    private func fetchBridgeImage() async throws -> Data {
+        let url = URL(string: "https://raw.githubusercontent.com/danielraffel/ggb/main/ggb.screenshot.png")!
+        let (data, _) = try await URLSession.shared.data(from: url)
+        return data
     }
     
     @WeatherActor

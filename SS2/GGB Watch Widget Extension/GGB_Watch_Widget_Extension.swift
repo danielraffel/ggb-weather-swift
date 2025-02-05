@@ -34,28 +34,39 @@ struct GGB_Watch_Widget_ExtensionEntryView: View {
     let entry: WeatherWidgetEntry
     
     var body: some View {
-        if let error = entry.error {
-            Text(error)
-                .font(.caption2)
-                .minimumScaleFactor(0.5)
-                .multilineTextAlignment(.center)
-        } else if let weather = entry.weatherData {
-            VStack(spacing: 2) {
-                Text("\(Int(weather.temperature))°")
-                    .font(.system(.body, design: .rounded))
-                    .bold()
-                
-                Text("\(Int(weather.windSpeed))mph")
-                    .font(.system(.caption2, design: .rounded))
-                
-                if weather.precipitationProbability > 0 {
-                    Text("\(Int(weather.precipitationProbability))%")
-                        .font(.system(.caption2, design: .rounded))
-                }
+        ZStack {
+            if let bridgeImage = entry.bridgeImage {
+                Image(uiImage: UIImage(data: bridgeImage) ?? UIImage())
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .opacity(0.7)
             }
-        } else {
-            Text("Loading...")
-                .font(.caption2)
+            
+            if let error = entry.error {
+                Text(error)
+                    .font(.caption2)
+                    .minimumScaleFactor(0.5)
+                    .multilineTextAlignment(.center)
+            } else if let weather = entry.weatherData {
+                VStack(spacing: 2) {
+                    Text("\(Int(weather.temperature))°")
+                        .font(.system(.body, design: .rounded))
+                        .bold()
+                    
+                    Text("\(Int(weather.windSpeed))mph")
+                        .font(.system(.caption2, design: .rounded))
+                    
+                    if weather.precipitationProbability > 0 {
+                        Text("\(Int(weather.precipitationProbability))%")
+                            .font(.system(.caption2, design: .rounded))
+                    }
+                }
+                .foregroundColor(.white)
+                .shadow(radius: 2)
+            } else {
+                Text("Loading...")
+                    .font(.caption2)
+            }
         }
     }
 }
@@ -71,16 +82,22 @@ struct GGB_Watch_Widget_ExtensionEntryView: View {
         precipitationProbability: 20
     )
     
+    // Create a sample bridge image
+    let sampleImage = UIImage(systemName: "bridge")?.withTintColor(.orange)
+    let bridgeImageData = sampleImage?.pngData()
+    
     let entry1 = WeatherWidgetEntry(
         date: Date(),
         weatherData: weatherData,
-        error: nil as String?
+        error: nil,
+        bridgeImage: bridgeImageData
     )
     
     let entry2 = WeatherWidgetEntry(
         date: Date(),
-        weatherData: nil as WeatherData?,
-        error: "No data"
+        weatherData: nil,
+        error: "No data",
+        bridgeImage: nil
     )
     
     return [entry1, entry2]

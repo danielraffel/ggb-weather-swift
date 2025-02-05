@@ -3,10 +3,12 @@ import Foundation
 protocol WeatherInteractorProtocol {
     func fetchWeatherData() async throws -> [WeatherData]
     func fetchSunsetTime() async throws -> Date
+    func fetchAndCacheWeatherData() async throws -> [WeatherData]
+    func loadCachedWeatherData() async throws -> [WeatherData]
 }
 
 @MainActor
-class WeatherInteractor: WeatherInteractorProtocol {
+final class WeatherInteractor: WeatherInteractorProtocol {
     private let weatherBaseURL = "https://api.open-meteo.com/v1/forecast"
     private let latitude = 37.8199
     private let longitude = -122.4783
@@ -24,9 +26,21 @@ class WeatherInteractor: WeatherInteractorProtocol {
     }
     
     func fetchWeatherData() async throws -> [WeatherData] {
+        return try await fetchAndCacheWeatherData()
+    }
+    
+    func fetchAndCacheWeatherData() async throws -> [WeatherData] {
         let weatherData = try await fetchWeatherFromAPI()
-        // Save to shared cache
-        let cachedData = CachedWeatherData(weatherData: weatherData)
+        
+        // Fetch bridge image
+        let bridgeImageData = try? await fetchBridgeImage()
+        
+        // Cache both weather data and bridge image
+        let cachedData = CachedWeatherData(
+            weatherData: weatherData,
+            timestamp: Date(),
+            bridgeImage: bridgeImageData
+        )
         try await sharedDataInteractor.saveWeatherData(cachedData)
         return weatherData
     }
@@ -57,10 +71,16 @@ class WeatherInteractor: WeatherInteractorProtocol {
                 time: time,
                 temperature: hourly.temperature2m[index],
                 cloudCover: hourly.cloudcover[index],
-                windSpeed: hourly.windspeed10m[index] * 0.621371,
+                windSpeed: hourly.windspeed10m[index] * 0.621371, // Convert to mph
                 precipitationProbability: hourly.precipitationProbability[index]
             )
         }
+    }
+    
+    private func fetchBridgeImage() async throws -> Data {
+        let url = URL(string: "https://raw.githubusercontent.com/danielraffel/ggb/main/ggb.screenshot.png")!
+        let (data, _) = try await URLSession.shared.data(from: url)
+        return data
     }
     
     func fetchSunsetTime() async throws -> Date {
@@ -89,6 +109,13 @@ class WeatherInteractor: WeatherInteractorProtocol {
         return response.daily.sunset[0]
     }
     
+    func loadCachedWeatherData() async throws -> [WeatherData] {
+        guard let cachedData = try await sharedDataInteractor.loadWeatherData() else {
+            throw SharedDataError.cacheEmpty
+        }
+        return cachedData.weatherData
+    }
+    
     // API Response Models
     private struct WeatherResponse: Codable {
         let hourly: HourlyData
@@ -96,16 +123,16 @@ class WeatherInteractor: WeatherInteractorProtocol {
         struct HourlyData: Codable {
             let time: [Date]
             let temperature2m: [Double]
+            let precipitationProbability: [Double]
             let cloudcover: [Double]
             let windspeed10m: [Double]
-            let precipitationProbability: [Double]
             
             enum CodingKeys: String, CodingKey {
                 case time
                 case temperature2m = "temperature_2m"
+                case precipitationProbability = "precipitation_probability"
                 case cloudcover
                 case windspeed10m = "windspeed_10m"
-                case precipitationProbability = "precipitation_probability"
             }
         }
     }
@@ -117,4 +144,4 @@ class WeatherInteractor: WeatherInteractorProtocol {
             let sunset: [Date]
         }
     }
-} 
+}

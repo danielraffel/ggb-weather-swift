@@ -130,8 +130,6 @@
 		11138E532D34501C00B6E9B6 /* GGB WeatherUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "GGB WeatherUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		114698932D5147AB00678349 /* SharedCacheModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedCacheModels.swift; sourceTree = "<group>"; };
 		114698942D5147AB00678349 /* SharedDataInteractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedDataInteractor.swift; sourceTree = "<group>"; };
-		114698A32D51542B00678349 /* GGB Weather.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "GGB Weather.entitlements"; sourceTree = "<group>"; };
-		114698A42D51543200678349 /* GGBWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = GGBWidgetExtension.entitlements; sourceTree = "<group>"; };
 		114698A52D5155B900678349 /* GGB-Weather-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "GGB-Weather-Info.plist"; sourceTree = "<group>"; };
 		118B43322D4EBE22004288CA /* WeatherInteractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherInteractor.swift; sourceTree = "<group>"; };
 		118B43332D4EBE22004288CA /* WeatherModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherModels.swift; sourceTree = "<group>"; };
@@ -304,8 +302,6 @@
 			isa = PBXGroup;
 			children = (
 				114698A52D5155B900678349 /* GGB-Weather-Info.plist */,
-				114698A42D51543200678349 /* GGBWidgetExtension.entitlements */,
-				114698A32D51542B00678349 /* GGB Weather.entitlements */,
 				118B43832D4EC81E004288CA /* Shared */,
 				11138E3B2D34501B00B6E9B6 /* SS2 */,
 				11138E4C2D34501C00B6E9B6 /* SS2Tests */,
@@ -783,10 +779,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
-				CODE_SIGN_ENTITLEMENTS = GGBWidgetExtension.entitlements;
+				CODE_SIGN_ENTITLEMENTS = GGBWidget/GGBWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 837Z6X9D9M;
+				DEVELOPMENT_TEAM = 95CX6P84C4;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = GGBWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = GGBWidget;
@@ -797,7 +793,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.SS2.GGBWidget;
+				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.ggb.GGBWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -811,10 +807,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
-				CODE_SIGN_ENTITLEMENTS = GGBWidgetExtension.entitlements;
+				CODE_SIGN_ENTITLEMENTS = GGBWidget/GGBWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 837Z6X9D9M;
+				DEVELOPMENT_TEAM = 95CX6P84C4;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = GGBWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = GGBWidget;
@@ -825,7 +821,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.SS2.GGBWidget;
+				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.ggb.GGBWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -958,11 +954,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "GGB Weather.entitlements";
+				CODE_SIGN_ENTITLEMENTS = "SS2/GGB Weather.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"SS2/Preview Content\"";
-				DEVELOPMENT_TEAM = 837Z6X9D9M;
+				DEVELOPMENT_TEAM = 95CX6P84C4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "GGB-Weather-Info.plist";
@@ -980,7 +976,7 @@
 					"-Xlinker",
 					"-interposable",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.SS2;
+				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.ggb;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -993,11 +989,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "GGB Weather.entitlements";
+				CODE_SIGN_ENTITLEMENTS = "SS2/GGB Weather.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"SS2/Preview Content\"";
-				DEVELOPMENT_TEAM = 837Z6X9D9M;
+				DEVELOPMENT_TEAM = 95CX6P84C4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "GGB-Weather-Info.plist";
@@ -1011,7 +1007,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.SS2;
+				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.ggb;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -1025,11 +1021,11 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 837Z6X9D9M;
+				DEVELOPMENT_TEAM = 95CX6P84C4;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.SS2Tests;
+				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.ggbTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -1044,11 +1040,11 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 837Z6X9D9M;
+				DEVELOPMENT_TEAM = 95CX6P84C4;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.SS2Tests;
+				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.ggbTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -1062,10 +1058,10 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 837Z6X9D9M;
+				DEVELOPMENT_TEAM = 95CX6P84C4;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.SS2UITests;
+				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.ggbUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -1079,10 +1075,10 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 837Z6X9D9M;
+				DEVELOPMENT_TEAM = 95CX6P84C4;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.SS2UITests;
+				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.ggbUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
@@ -1100,19 +1096,19 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"GGB Watch App Watch App/Preview Content\"";
-				DEVELOPMENT_TEAM = 837Z6X9D9M;
+				DEVELOPMENT_TEAM = 95CX6P84C4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "GGB-Watch-App-Watch-App-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "GGB Watch App";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = generouscorp.SS2;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = generouscorp.ggb;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.SS2.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.ggb.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -1132,19 +1128,19 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"GGB Watch App Watch App/Preview Content\"";
-				DEVELOPMENT_TEAM = 837Z6X9D9M;
+				DEVELOPMENT_TEAM = 95CX6P84C4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "GGB-Watch-App-Watch-App-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "GGB Watch App";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = generouscorp.SS2;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = generouscorp.ggb;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.SS2.watchkitapp;
+				PRODUCT_BUNDLE_IDENTIFIER = generouscorp.ggb.watchkitapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -1161,10 +1157,10 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 837Z6X9D9M;
+				DEVELOPMENT_TEAM = 95CX6P84C4;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "generouscorp.GGB-Watch-App-Watch-AppTests";
+				PRODUCT_BUNDLE_IDENTIFIER = "generouscorp.ggb.GGB-Watch-App-Watch-AppTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -1181,10 +1177,10 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 837Z6X9D9M;
+				DEVELOPMENT_TEAM = 95CX6P84C4;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "generouscorp.GGB-Watch-App-Watch-AppTests";
+				PRODUCT_BUNDLE_IDENTIFIER = "generouscorp.ggb.GGB-Watch-App-Watch-AppTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -1200,10 +1196,10 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 837Z6X9D9M;
+				DEVELOPMENT_TEAM = 95CX6P84C4;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "generouscorp.GGB-Watch-App-Watch-AppUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = "generouscorp.ggbGGB-Watch-App-Watch-AppUITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -1219,10 +1215,10 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 837Z6X9D9M;
+				DEVELOPMENT_TEAM = 95CX6P84C4;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "generouscorp.GGB-Watch-App-Watch-AppUITests";
+				PRODUCT_BUNDLE_IDENTIFIER = "generouscorp.ggbGGB-Watch-App-Watch-AppUITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -1241,7 +1237,7 @@
 				CODE_SIGN_ENTITLEMENTS = "GGB Watch Widget Extension/GGB Watch Widget Extension.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 837Z6X9D9M;
+				DEVELOPMENT_TEAM = 95CX6P84C4;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "GGB Watch Widget Extension/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "GGB Watch Widget Extension";
@@ -1253,7 +1249,7 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "generouscorp.SS2.watchkitapp.GGB-Watch-Widget-Extension";
+				PRODUCT_BUNDLE_IDENTIFIER = "generouscorp.ggb.watchkitapp.GGB-Watch-Widget-Extension";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -1272,7 +1268,7 @@
 				CODE_SIGN_ENTITLEMENTS = "GGB Watch Widget Extension/GGB Watch Widget Extension.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 837Z6X9D9M;
+				DEVELOPMENT_TEAM = 95CX6P84C4;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "GGB Watch Widget Extension/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "GGB Watch Widget Extension";
@@ -1284,7 +1280,7 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "generouscorp.SS2.watchkitapp.GGB-Watch-Widget-Extension";
+				PRODUCT_BUNDLE_IDENTIFIER = "generouscorp.ggb.watchkitapp.GGB-Watch-Widget-Extension";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;

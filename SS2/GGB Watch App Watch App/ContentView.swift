@@ -15,7 +15,7 @@ struct GGBWatchAppView: View {
                 .font(.title3)
                 .bold()
             
-            Image(systemName: "bridge.fill")
+            Image(systemName: "bridge")
                 .font(.system(size: 40))
                 .foregroundStyle(.orange)
             

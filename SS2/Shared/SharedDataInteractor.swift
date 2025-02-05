@@ -3,14 +3,15 @@ import os
 
 public final class SharedDataInteractor: SharedDataInteractorProtocol {
     private let fileManager = FileManager.default
-    private let logger = Logger(subsystem: "generouscorp.SS2.ggbweather", category: "SharedDataInteractor")
+    private let logger = Logger(subsystem: "generouscorp.ggb", category: "SharedDataInteractor")
     private let maxCacheAge: TimeInterval = 15 * 60 // 15 minutes
+    private let appGroupIdentifier = "group.genco"
     
     public init() {
         logger.notice("🔧 Initializing SharedDataInteractor...")
         
         // Debug app group access
-        if let containerURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: "group.generouscorp.SS2.ggbweather") {
+        if let containerURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier) {
             logger.notice("📂 App group container path: \(containerURL.path)")
             
             // Create Preferences directory if it doesn't exist
@@ -31,35 +32,21 @@ public final class SharedDataInteractor: SharedDataInteractorProtocol {
     @SharedDataActor
     public func saveWeatherData(_ data: CachedWeatherData) async throws {
         logger.notice("💾 Attempting to save weather data...")
-        guard let containerURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: "group.generouscorp.SS2.ggbweather") else {
+        
+        guard let containerURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier) else {
             logger.error("❌ Could not access app group container for saving")
             throw SharedDataError.saveFailed
         }
         
-        let prefsURL = containerURL.appendingPathComponent("Library/Preferences")
-        let cacheFile = prefsURL.appendingPathComponent("weatherCache.json")
-        
-        // Ensure preferences directory exists
-        do {
-            try fileManager.createDirectory(at: prefsURL, withIntermediateDirectories: true)
-            logger.notice("✅ Ensured preferences directory exists at: \(prefsURL.path)")
-        } catch {
-            logger.error("❌ Failed to create preferences directory: \(error.localizedDescription)")
-            throw SharedDataError.saveFailed
-        }
+        let cacheFile = containerURL
+            .appendingPathComponent("Library/Caches")
+            .appendingPathComponent("weatherCache.json")
         
         do {
             let encoder = JSONEncoder()
             let encodedData = try encoder.encode(data)
             try encodedData.write(to: cacheFile, options: .atomic)
             logger.notice("✅ Successfully saved weather data. Items: \(data.weatherData.count), Size: \(encodedData.count) bytes")
-            
-            // Verify save
-            if let savedData = try? Data(contentsOf: cacheFile) {
-                logger.notice("✅ Verified data in cache: \(savedData.count) bytes")
-            } else {
-                logger.error("❌ Failed to verify saved data")
-            }
         } catch {
             logger.error("❌ Failed to save weather data: \(error.localizedDescription)")
             throw SharedDataError.saveFailed
@@ -69,13 +56,14 @@ public final class SharedDataInteractor: SharedDataInteractorProtocol {
     @SharedDataActor
     public func loadWeatherData() async throws -> CachedWeatherData? {
         logger.notice("📂 Attempting to load weather data...")
-        guard let containerURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: "group.generouscorp.SS2.ggbweather") else {
+        guard let containerURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier) else {
             logger.error("❌ Could not access app group container for loading")
             throw SharedDataError.loadFailed
         }
         
-        let prefsURL = containerURL.appendingPathComponent("Library/Preferences")
-        let cacheFile = prefsURL.appendingPathComponent("weatherCache.json")
+        let cacheFile = containerURL
+            .appendingPathComponent("Library/Caches")
+            .appendingPathComponent("weatherCache.json")
         
         guard fileManager.fileExists(atPath: cacheFile.path) else {
             logger.error("❌ No data found in shared cache")
@@ -84,12 +72,9 @@ public final class SharedDataInteractor: SharedDataInteractorProtocol {
         
         do {
             let data = try Data(contentsOf: cacheFile)
-            logger.notice("📦 Found data in cache: \(data.count) bytes")
-            
             let decoder = JSONDecoder()
             let cachedData = try decoder.decode(CachedWeatherData.self, from: data)
             
-            // Check if cache is stale
             let age = Date().timeIntervalSince(cachedData.timestamp)
             if age > maxCacheAge {
                 logger.error("⏰ Cache is stale. Age: \(Int(age))s")
@@ -99,9 +84,7 @@ public final class SharedDataInteractor: SharedDataInteractorProtocol {
             logger.notice("✅ Successfully loaded weather data. Items: \(cachedData.weatherData.count), Age: \(Int(age))s")
             return cachedData
         } catch {
-            if error is SharedDataError {
-                throw error
-            }
+            if error is SharedDataError { throw error }
             logger.error("❌ Failed to decode weather data: \(error.localizedDescription)")
             throw SharedDataError.loadFailed
         }
@@ -110,13 +93,14 @@ public final class SharedDataInteractor: SharedDataInteractorProtocol {
     @SharedDataActor
     public func clearCache() async throws {
         logger.notice("🗑️ Clearing cache...")
-        guard let containerURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: "group.generouscorp.SS2.ggbweather") else {
+        guard let containerURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier) else {
             logger.error("❌ Could not access app group container for clearing cache")
             return
         }
         
-        let prefsURL = containerURL.appendingPathComponent("Library/Preferences")
-        let cacheFile = prefsURL.appendingPathComponent("weatherCache.json")
+        let cacheFile = containerURL
+            .appendingPathComponent("Library/Caches")
+            .appendingPathComponent("weatherCache.json")
         
         do {
             try fileManager.removeItem(at: cacheFile)

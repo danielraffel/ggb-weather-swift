@@ -3,6 +3,17 @@ import SwiftUI
 import WidgetKit
 
 class ComplicationController: NSObject, CLKComplicationDataSource {
+    private let dataInteractor = SharedDataInteractor()
+    private var cachedWeatherData: CachedWeatherData?
+    
+    override init() {
+        super.init()
+        // Load cached data on initialization
+        Task {
+            cachedWeatherData = try? await dataInteractor.loadWeatherData()
+        }
+    }
+    
     func getCurrentTimelineEntry(for complication: CLKComplication, withHandler handler: @escaping (CLKComplicationTimelineEntry?) -> Void) {
         // Create a timeline entry for the current time
         let timelineEntry = createTimelineEntry(for: complication, date: Date())
@@ -36,7 +47,8 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
                         windSpeed: 15,
                         precipitationProbability: 20
                     ),
-                    error: nil
+                    error: nil,
+                    bridgeImage: cachedWeatherData?.bridgeImage
                 ))
             )
             return template
@@ -52,7 +64,8 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
                         windSpeed: 15,
                         precipitationProbability: 20
                     ),
-                    error: nil
+                    error: nil,
+                    bridgeImage: cachedWeatherData?.bridgeImage
                 ))
             )
             return template
