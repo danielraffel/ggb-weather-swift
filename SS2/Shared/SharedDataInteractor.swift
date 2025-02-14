@@ -1,13 +1,36 @@
 import Foundation
 import os
+import WatchConnectivity
+import WidgetKit
 
-public final class SharedDataInteractor: SharedDataInteractorProtocol {
+private extension ProcessInfo {
+    var isWatchOS: Bool {
+        #if os(watchOS)
+        return true
+        #else
+        return false
+        #endif
+    }
+}
+
+public final class SharedDataInteractor: NSObject, SharedDataInteractorProtocol, WCSessionDelegate {
     private let fileManager = FileManager.default
     private let logger = Logger(subsystem: "generouscorp.ggb", category: "SharedDataInteractor")
     private let maxCacheAge: TimeInterval = 15 * 60 // 15 minutes
     private let appGroupIdentifier = "group.genco"
+    private let sharedDefaults: UserDefaults?
+    private var session: WCSession?
     
-    public init() {
+    public override init() {
+        self.sharedDefaults = UserDefaults(suiteName: appGroupIdentifier)
+        super.init()
+        
+        if WCSession.isSupported() {
+            self.session = WCSession.default
+            WCSession.default.delegate = self
+            WCSession.default.activate()
+        }
+        
         logger.notice("🔧 Initializing SharedDataInteractor...")
         
         // Debug app group access
@@ -29,26 +52,44 @@ public final class SharedDataInteractor: SharedDataInteractorProtocol {
         logger.notice("✅ SharedDataInteractor initialized successfully")
     }
     
+    // Required WCSessionDelegate methods
+    public func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
+        if let error = error {
+            logger.error("❌ WCSession activation failed: \(error.localizedDescription)")
+        } else {
+            logger.notice("✅ WCSession activated with state: \(activationState.rawValue)")
+        }
+    }
+    
+    #if os(iOS)
+    public func sessionDidBecomeInactive(_ session: WCSession) {
+        logger.notice("⚠️ WCSession became inactive")
+    }
+    
+    public func sessionDidDeactivate(_ session: WCSession) {
+        logger.notice("⚠️ WCSession deactivated")
+        WCSession.default.activate()
+    }
+    #endif
+    
+    // SharedDataInteractorProtocol methods
     @SharedDataActor
     public func saveWeatherData(_ data: CachedWeatherData) async throws {
-        logger.notice("💾 Attempting to save weather data...")
-        
-        guard let containerURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier) else {
-            logger.error("❌ Could not access app group container for saving")
-            throw SharedDataError.saveFailed
-        }
-        
-        let cacheFile = containerURL
-            .appendingPathComponent("Library/Caches")
-            .appendingPathComponent("weatherCache.json")
-        
-        do {
+        logger.notice("📂 Saving weather data...")
+        if let containerURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier) {
+            let cacheURL = containerURL.appendingPathComponent("Library/Caches/weatherData.json")
             let encoder = JSONEncoder()
-            let encodedData = try encoder.encode(data)
-            try encodedData.write(to: cacheFile, options: .atomic)
-            logger.notice("✅ Successfully saved weather data. Items: \(data.weatherData.count), Size: \(encodedData.count) bytes")
-        } catch {
-            logger.error("❌ Failed to save weather data: \(error.localizedDescription)")
+            let data = try encoder.encode(data)
+            try data.write(to: cacheURL)
+            logger.notice("✅ Saved weather data to cache")
+            
+            // Also save to UserDefaults as backup
+            sharedDefaults?.set(data, forKey: "weatherData")
+            logger.notice("✅ Saved weather data to UserDefaults")
+            
+            WidgetCenter.shared.reloadAllTimelines()
+        } else {
+            logger.error("❌ Could not access app group container")
             throw SharedDataError.saveFailed
         }
     }
@@ -56,57 +97,44 @@ public final class SharedDataInteractor: SharedDataInteractorProtocol {
     @SharedDataActor
     public func loadWeatherData() async throws -> CachedWeatherData? {
         logger.notice("📂 Attempting to load weather data...")
-        guard let containerURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier) else {
-            logger.error("❌ Could not access app group container for loading")
-            throw SharedDataError.loadFailed
-        }
         
-        let cacheFile = containerURL
-            .appendingPathComponent("Library/Caches")
-            .appendingPathComponent("weatherCache.json")
-        
-        guard fileManager.fileExists(atPath: cacheFile.path) else {
-            logger.error("❌ No data found in shared cache")
-            throw SharedDataError.cacheEmpty
-        }
-        
-        do {
-            let data = try Data(contentsOf: cacheFile)
-            let decoder = JSONDecoder()
-            let cachedData = try decoder.decode(CachedWeatherData.self, from: data)
-            
-            let age = Date().timeIntervalSince(cachedData.timestamp)
-            if age > maxCacheAge {
-                logger.error("⏰ Cache is stale. Age: \(Int(age))s")
-                throw SharedDataError.cacheStale
+        // Try loading from UserDefaults first
+        if let data = sharedDefaults?.data(forKey: "weatherData") {
+            do {
+                let decoder = JSONDecoder()
+                let weatherData = try decoder.decode(CachedWeatherData.self, from: data)
+                logger.notice("✅ Loaded weather data from UserDefaults")
+                return weatherData
+            } catch {
+                logger.error("❌ Failed to decode UserDefaults data: \(error)")
             }
-            
-            logger.notice("✅ Successfully loaded weather data. Items: \(cachedData.weatherData.count), Age: \(Int(age))s")
-            return cachedData
-        } catch {
-            if error is SharedDataError { throw error }
-            logger.error("❌ Failed to decode weather data: \(error.localizedDescription)")
-            throw SharedDataError.loadFailed
         }
+        
+        // Try loading from file cache
+        if let containerURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier) {
+            let cacheURL = containerURL.appendingPathComponent("Library/Caches/weatherData.json")
+            do {
+                let data = try Data(contentsOf: cacheURL)
+                let decoder = JSONDecoder()
+                let weatherData = try decoder.decode(CachedWeatherData.self, from: data)
+                logger.notice("✅ Loaded weather data from file cache")
+                return weatherData
+            } catch {
+                logger.error("❌ Failed to load from file cache: \(error)")
+            }
+        }
+        
+        logger.error("❌ No data found in shared cache")
+        return nil
     }
     
     @SharedDataActor
     public func clearCache() async throws {
-        logger.notice("🗑️ Clearing cache...")
-        guard let containerURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier) else {
-            logger.error("❌ Could not access app group container for clearing cache")
-            return
-        }
-        
-        let cacheFile = containerURL
-            .appendingPathComponent("Library/Caches")
-            .appendingPathComponent("weatherCache.json")
-        
-        do {
-            try fileManager.removeItem(at: cacheFile)
-            logger.notice("✅ Cache cleared")
-        } catch {
-            logger.error("❌ Failed to clear cache: \(error.localizedDescription)")
+        if let containerURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier) {
+            let cacheURL = containerURL.appendingPathComponent("Library/Caches/weatherData.json")
+            try? fileManager.removeItem(at: cacheURL)
+            sharedDefaults?.removeObject(forKey: "weatherData")
+            logger.notice("✅ Cleared weather data cache")
         }
     }
 } 
