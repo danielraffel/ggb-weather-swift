@@ -14,6 +14,7 @@ public final class SharedDataInteractor: SharedDataInteractorProtocol {
     private let maxCacheAge: TimeInterval = 15 * 60 // 15 minutes
     private let appGroupIdentifier = "group.genco"
     private let sharedDefaults: UserDefaults?
+    private var cachedContainers: [URL]?
     
     public init() {
         self.sharedDefaults = UserDefaults(suiteName: appGroupIdentifier)
@@ -39,6 +40,11 @@ public final class SharedDataInteractor: SharedDataInteractorProtocol {
     @SharedDataActor
     public func saveWeatherData(_ data: CachedWeatherData) async throws {
         logger.notice("💾 Attempting to save weather data...")
+        let encoder = JSONEncoder()
+        let encodedData = try encoder.encode(data)
+        
+        var savedSuccessfully = false
+        let isSimulator = ProcessInfo.processInfo.environment["SIMULATOR_DEVICE_NAME"] != nil
         
         for containerURL in getContainerURLs() {
             // Save to both Preferences and Caches directories
@@ -52,17 +58,26 @@ public final class SharedDataInteractor: SharedDataInteractorProtocol {
             for savePath in savePaths {
                 do {
                     try fileManager.createDirectory(at: savePath.deletingLastPathComponent(), withIntermediateDirectories: true)
-                    let encoder = JSONEncoder()
-                    let encodedData = try encoder.encode(data)
                     try encodedData.write(to: savePath, options: .atomic)
                     
                     if let size = try? savePath.resourceValues(forKeys: [.fileSizeKey]).fileSize {
                         logger.notice("✅ Successfully saved weather data to \(savePath.path). Items: \(data.weatherData.count), Size: \(size) bytes")
+                        savedSuccessfully = true
                     }
                 } catch {
                     logger.error("❌ Failed to save to cache at \(savePath.path): \(error)")
+                    // Only throw error if this is the last container and we haven't saved successfully
+                    if !isSimulator || containerURL == getContainerURLs().last {
+                        if !savedSuccessfully {
+                            throw SharedDataError.saveFailed
+                        }
+                    }
                 }
             }
+        }
+        
+        if !savedSuccessfully {
+            throw SharedDataError.saveFailed
         }
     }
     
@@ -137,46 +152,102 @@ public final class SharedDataInteractor: SharedDataInteractorProtocol {
     }
     
     private func getContainerURLs() -> [URL] {
-        var containers: [URL] = []
+        // Return cached containers if available
+        if let cached = cachedContainers {
+            return cached
+        }
         
-        if let mainContainer = fileManager.containerURL(forSecurityApplicationGroupIdentifier: self.appGroupIdentifier) {
-            containers.append(mainContainer)
-            
-            // Get simulator root directory
-            if mainContainer.path.contains("CoreSimulator") {
-                let simulatorRoot = mainContainer.deletingLastPathComponent()
-                    .deletingLastPathComponent()
-                    .deletingLastPathComponent()
-                    .deletingLastPathComponent()
-                    .deletingLastPathComponent()
-                    .deletingLastPathComponent()
-                    .deletingLastPathComponent()
+        var containers: [URL] = []
+        let appGroupIdentifiers = ["group.genco", "group.generouscorp.ggb"]
+        let isSimulator = ProcessInfo.processInfo.environment["SIMULATOR_DEVICE_NAME"] != nil
+        
+        logger.notice("🔍 Running on \(isSimulator ? "simulator" : "physical device")")
+        
+        // Try all possible app group identifiers
+        for identifier in appGroupIdentifiers {
+            if let containerURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: identifier) {
+                containers.append(containerURL)
+                logger.notice("📂 Found container for \(identifier): \(containerURL.path)")
                 
-                // Look for app group containers in all simulator devices
-                if let deviceDirs = try? fileManager.contentsOfDirectory(at: simulatorRoot.appendingPathComponent("Devices"), includingPropertiesForKeys: nil) {
-                    for deviceDir in deviceDirs where deviceDir.hasDirectoryPath {
-                        let appGroupPath = deviceDir.appendingPathComponent("data/Containers/Shared/AppGroup")
-                        if let appGroups = try? fileManager.contentsOfDirectory(at: appGroupPath, includingPropertiesForKeys: nil) {
-                            for group in appGroups where group.hasDirectoryPath {
-                                // Check if this is our app group by looking for our cache file
-                                let prefsPath = group.appendingPathComponent("Library/Preferences/weatherCache.json")
-                                let cachesPath = group.appendingPathComponent("Library/Caches/weatherCache.json")
-                                
-                                if fileManager.fileExists(atPath: prefsPath.path) || fileManager.fileExists(atPath: cachesPath.path) {
-                                    containers.append(group)
-                                    logger.notice("✅ Found existing cache in simulator device: \(deviceDir.lastPathComponent)")
+                // In simulator, we need to look for additional containers
+                if isSimulator {
+                    // Get simulator root directory (6 levels up from container)
+                    let simulatorRoot = containerURL.deletingLastPathComponent() // AppGroup
+                        .deletingLastPathComponent() // Shared
+                        .deletingLastPathComponent() // Containers
+                        .deletingLastPathComponent() // data
+                        .deletingLastPathComponent() // DeviceID
+                        .deletingLastPathComponent() // Devices
+                    
+                    logger.notice("�� Simulator root: \(simulatorRoot.path)")
+                    
+                    // Look for app group containers in all simulator devices
+                    if let deviceDirs = try? fileManager.contentsOfDirectory(at: simulatorRoot, includingPropertiesForKeys: nil) {
+                        for deviceDir in deviceDirs where deviceDir.hasDirectoryPath {
+                            let appGroupPath = deviceDir.appendingPathComponent("data/Containers/Shared/AppGroup")
+                            if let appGroups = try? fileManager.contentsOfDirectory(at: appGroupPath, includingPropertiesForKeys: nil) {
+                                for group in appGroups where group.hasDirectoryPath {
+                                    // Check if this is our app group by looking for our cache file
+                                    let prefsPath = group.appendingPathComponent("Library/Preferences/weatherCache.json")
+                                    let cachesPath = group.appendingPathComponent("Library/Caches/weatherCache.json")
+                                    
+                                    if fileManager.fileExists(atPath: prefsPath.path) || fileManager.fileExists(atPath: cachesPath.path) {
+                                        if !containers.contains(group) {
+                                            containers.append(group)
+                                            logger.notice("✅ Found additional container in simulator: \(group.path)")
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        } else {
-            logger.error("❌ Could not access app group container for identifier: \(self.appGroupIdentifier)")
         }
         
+        // If we're on a physical device and no containers were found, try to create one
+        if containers.isEmpty && !isSimulator {
+            if let containerURL = fileManager.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier) {
+                containers.append(containerURL)
+                logger.notice("📂 Created new container on physical device: \(containerURL.path)")
+                
+                // Ensure the Preferences directory exists
+                let prefsURL = containerURL.appendingPathComponent("Library/Preferences")
+                do {
+                    try fileManager.createDirectory(at: prefsURL, withIntermediateDirectories: true)
+                    logger.notice("✅ Created Preferences directory at: \(prefsURL.path)")
+                } catch {
+                    logger.error("❌ Failed to create Preferences directory: \(error.localizedDescription)")
+                }
+            }
+        }
+        
+        // Log all found containers
         logger.notice("📱 Found \(containers.count) potential app group containers")
-        containers.forEach { logger.notice("   📂 \($0.path)") }
+        for (index, container) in containers.enumerated() {
+            logger.notice("   📂 [\(index + 1)] \(container.path)")
+            
+            // Check for existing cache files
+            let prefsPath = container.appendingPathComponent("Library/Preferences/weatherCache.json")
+            let cachesPath = container.appendingPathComponent("Library/Caches/weatherCache.json")
+            
+            if fileManager.fileExists(atPath: prefsPath.path) {
+                if let data = try? Data(contentsOf: prefsPath),
+                   let cachedData = try? JSONDecoder().decode(CachedWeatherData.self, from: data) {
+                    logger.notice("      ✅ Valid cache in Preferences: \(cachedData.weatherData.count) items")
+                }
+            }
+            
+            if fileManager.fileExists(atPath: cachesPath.path) {
+                if let data = try? Data(contentsOf: cachesPath),
+                   let cachedData = try? JSONDecoder().decode(CachedWeatherData.self, from: data) {
+                    logger.notice("      ✅ Valid cache in Caches: \(cachedData.weatherData.count) items")
+                }
+            }
+        }
+        
+        // Cache the containers for future use
+        cachedContainers = containers
         return containers
     }
     
@@ -204,6 +275,9 @@ public final class SharedDataInteractor: SharedDataInteractorProtocol {
                 logger.notice("ℹ️ No cache to clear at: \(cacheFile.path)")
             }
         }
+        
+        // Clear the container cache
+        cachedContainers = nil
     }
     
     private func refreshWeatherData() async {

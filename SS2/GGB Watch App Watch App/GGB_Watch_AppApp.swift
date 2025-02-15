@@ -29,40 +29,71 @@ struct GGB_Watch_AppApp: App {
     private func loadInitialData() async {
         logger.notice("⌚️ Loading initial data...")
         
-        while true {
-            if let data = try? await dataInteractor.loadWeatherData() {
-                logger.notice("✅ Loaded data with \(data.weatherData.count) items")
+        // Wait for WCSession to be activated and reachable
+        while !WCSession.default.isReachable {
+            logger.notice("⏳ Waiting for WCSession to become reachable...")
+            try? await Task.sleep(nanoseconds: 2_000_000_000) // Wait 2 seconds
+            
+            // Check if we have cached data while waiting
+            if let cachedData = try? await dataInteractor.loadWeatherData() {
+                logger.notice("✅ Found cached data while waiting for WCSession: \(cachedData.weatherData.count) items")
                 WidgetCenter.shared.reloadAllTimelines()
                 return
             }
-            
-            logger.notice("📱 Requesting data from iOS app...")
-            do {
-                try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-                    WCSession.default.sendMessage(["request": "weatherData"]) { reply in
-                        if let encodedData = reply["weatherData"] as? Data {
-                            Task {
-                                do {
-                                    let decodedData = try JSONDecoder().decode(CachedWeatherData.self, from: encodedData)
-                                    try await self.dataInteractor.saveWeatherData(decodedData)
-                                    logger.notice("✅ Received and saved data from iOS app")
-                                    WidgetCenter.shared.reloadAllTimelines()
-                                    continuation.resume()
-                                } catch {
-                                    continuation.resume(throwing: error)
-                                }
+        }
+        
+        logger.notice("📱 WCSession is reachable, requesting data...")
+        do {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                // First, request data transfer start
+                WCSession.default.sendMessage(["type": "requestTransfer"]) { reply in
+                    if let status = reply["status"] as? String, status == "ready" {
+                        Task {
+                            do {
+                                // Now request the actual data
+                                try await self.requestDataInChunks()
+                                continuation.resume()
+                            } catch {
+                                continuation.resume(throwing: error)
                             }
-                        } else {
-                            continuation.resume(throwing: WatchConnectionError.connectionLost)
                         }
-                    } errorHandler: { error in
-                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume(throwing: WatchConnectionError.connectionLost)
                     }
+                } errorHandler: { error in
+                    continuation.resume(throwing: error)
                 }
-                return
-            } catch {
-                logger.error("❌ Failed to get data: \(error.localizedDescription)")
-                try? await Task.sleep(nanoseconds: 5_000_000_000)
+            }
+        } catch {
+            logger.error("❌ Failed to get data: \(error.localizedDescription)")
+            // Try to load cached data as fallback
+            if let cachedData = try? await dataInteractor.loadWeatherData() {
+                logger.notice("✅ Using cached data after WCSession error: \(cachedData.weatherData.count) items")
+                WidgetCenter.shared.reloadAllTimelines()
+            }
+        }
+    }
+    
+    private func requestDataInChunks() async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            WCSession.default.sendMessage(["type": "getData"]) { reply in
+                if let encodedData = reply["weatherData"] as? Data {
+                    Task {
+                        do {
+                            let decodedData = try JSONDecoder().decode(CachedWeatherData.self, from: encodedData)
+                            try await self.dataInteractor.saveWeatherData(decodedData)
+                            logger.notice("✅ Received and saved data from iOS app: \(decodedData.weatherData.count) items")
+                            WidgetCenter.shared.reloadAllTimelines()
+                            continuation.resume()
+                        } catch {
+                            continuation.resume(throwing: error)
+                        }
+                    }
+                } else {
+                    continuation.resume(throwing: WatchConnectionError.connectionLost)
+                }
+            } errorHandler: { error in
+                continuation.resume(throwing: error)
             }
         }
     }
@@ -96,13 +127,7 @@ class WatchSessionDelegate: NSObject, ObservableObject, WCSessionDelegate {
     private let logger = Logger(subsystem: "generouscorp.ggb", category: "WatchApp")
     private let sharedDataInteractor = SharedDataInteractor()
     private var dataBuffer = Data()
-    private var expectedChunks = 0
     private var receivedChunks = 0
-    
-    // Add public accessor for receivedChunks
-    var currentReceivedChunks: Int {
-        receivedChunks
-    }
     
     override init() {
         super.init()
@@ -120,48 +145,21 @@ class WatchSessionDelegate: NSObject, ObservableObject, WCSessionDelegate {
         logger.notice("✅ WCSession activated with state: \(activationState.rawValue)")
     }
     
-    func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
-        logger.notice("�� Received user info transfer")
-        if let weatherData = userInfo["weatherData"] as? Data {
-            Task {
-                do {
-                    let decodedData = try JSONDecoder().decode(CachedWeatherData.self, from: weatherData)
-                    let existingData = try? await sharedDataInteractor.loadWeatherData()
-                    let newData = CachedWeatherData(
-                        weatherData: decodedData.weatherData,
-                        bridgeImage: existingData?.bridgeImage
-                    )
-                    try await sharedDataInteractor.saveWeatherData(newData)
-                    logger.notice("✅ Saved received weather data")
-                    WidgetCenter.shared.reloadAllTimelines()
-                } catch {
-                    logger.error("❌ Failed to process received weather data: \(error)")
-                }
-            }
-        }
-    }
-    
     func session(_ session: WCSession, didReceiveMessage message: [String : Any], replyHandler: @escaping ([String : Any]) -> Void) {
         logger.notice("📥 Received message: \(message.keys)")
         if let type = message["type"] as? String {
             switch type {
-            case "startTransfer":
-                self.expectedChunks = message["chunks"] as? Int ?? 0
-                logger.notice("🔄 Starting transfer with \(self.expectedChunks) expected chunks")
-                self.dataBuffer = Data()
-                self.receivedChunks = 0
-                replyHandler(["status": "ready"])
-                
             case "chunk":
                 if let chunkData = message["data"] as? Data,
-                   let index = message["index"] as? Int {
-                    self.dataBuffer.append(chunkData)
-                    self.receivedChunks += 1
-                    logger.notice("✅ Received chunk \(index + 1)/\(self.expectedChunks) (size: \(chunkData.count) bytes)")
+                   let index = message["index"] as? Int,
+                   let total = message["total"] as? Int {
+                    dataBuffer.append(chunkData)
+                    receivedChunks += 1
+                    logger.notice("✅ Received chunk \(index + 1)/\(total) (size: \(chunkData.count) bytes)")
                     
-                    if self.receivedChunks == self.expectedChunks {
+                    if receivedChunks == total {
                         logger.notice("🎯 All chunks received, processing data...")
-                        self.processCompleteData()
+                        processCompleteData()
                     }
                     replyHandler(["status": "received", "chunk": index])
                 } else {
@@ -173,23 +171,47 @@ class WatchSessionDelegate: NSObject, ObservableObject, WCSessionDelegate {
                 logger.error("❌ Unknown message type: \(type)")
                 replyHandler(["status": "unknown"])
             }
+        } else if let weatherData = message["weatherData"] as? Data {
+            Task {
+                do {
+                    let decodedData = try JSONDecoder().decode(CachedWeatherData.self, from: weatherData)
+                    try await sharedDataInteractor.saveWeatherData(decodedData)
+                    logger.notice("✅ Saved received weather data with \(decodedData.weatherData.count) items")
+                    WidgetCenter.shared.reloadAllTimelines()
+                    replyHandler(["status": "success"])
+                } catch {
+                    logger.error("❌ Failed to process received weather data: \(error)")
+                    replyHandler(["status": "error", "message": error.localizedDescription])
+                }
+            }
         } else {
             logger.error("❌ Message missing type field")
             replyHandler(["status": "error", "message": "missing type"])
         }
     }
-
-    // Remove the duplicate session(_:didReceive:) method at line 187
-    // Keep only the one with file: WCSessionFile parameter
+    
+    func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
+        logger.notice("📦 Received user info transfer")
+        if let weatherData = userInfo["weatherData"] as? Data {
+            Task {
+                do {
+                    let decodedData = try JSONDecoder().decode(CachedWeatherData.self, from: weatherData)
+                    try await sharedDataInteractor.saveWeatherData(decodedData)
+                    logger.notice("✅ Saved received weather data")
+                    WidgetCenter.shared.reloadAllTimelines()
+                } catch {
+                    logger.error("❌ Failed to process received weather data: \(error)")
+                }
+            }
+        }
+    }
     
     private func processCompleteData() {
         Task {
             do {
                 logger.notice("🔄 Processing complete data (size: \(self.dataBuffer.count) bytes)")
                 let decodedData = try JSONDecoder().decode(CachedWeatherData.self, from: self.dataBuffer)
-                logger.notice("📊 Decoded weather data contains:")
-                logger.notice("  • Number of weather entries: \(decodedData.weatherData.count)")
-                // Remove timestamp check since it's not available
+                logger.notice("📊 Decoded weather data contains \(decodedData.weatherData.count) items")
                 
                 let existingData = try? await sharedDataInteractor.loadWeatherData()
                 logger.notice("🖼️ Bridge image status: \(existingData?.bridgeImage != nil ? "Present" : "Missing")")
@@ -212,8 +234,7 @@ class WatchSessionDelegate: NSObject, ObservableObject, WCSessionDelegate {
             receivedChunks = 0
         }
     }
-
-    // This is the only implementation we should keep for handling files
+    
     func session(_ session: WCSession, didReceive file: WCSessionFile) {
         logger.notice("📥 Received file")
         if file.metadata?["type"] as? String == "bridgeImage" {

@@ -111,27 +111,69 @@ class AppDelegate: NSObject, UIApplicationDelegate, WCSessionDelegate {
     func session(_ session: WCSession, didReceiveMessage message: [String : Any], replyHandler: @escaping ([String : Any]) -> Void) {
         logger.notice("📱 Received message from watch: \(message)")
         
-        if let request = message["request"] as? String, request == "weatherData" {
-            Task {
-                do {
-                    _ = try await weatherInteractor.fetchAndCacheWeatherData()
-                    if let data = try? await sharedDataInteractor.loadWeatherData() {
-                        let encoder = JSONEncoder()
-                        let encodedData = try encoder.encode(data)
-                        replyHandler(["weatherData": encodedData])
-                        logger.notice("✅ Sent weather data to watch")
+        if let type = message["type"] as? String {
+            switch type {
+            case "requestTransfer":
+                Task {
+                    let hasData = (try? await sharedDataInteractor.loadWeatherData()) != nil
+                    replyHandler(["status": "ready", "hasData": hasData])
+                    if hasData {
+                        logger.notice("✅ Acknowledged transfer request with existing data")
                     } else {
-                        replyHandler(["error": "No data available"])
-                        logger.error("❌ No weather data available")
+                        logger.notice("⚠️ Acknowledged transfer request with no existing data")
                     }
-                } catch {
-                    replyHandler(["error": error.localizedDescription])
-                    logger.error("❌ Failed to fetch weather data: \(error)")
                 }
+                
+            case "getData":
+                Task {
+                    do {
+                        _ = try await weatherInteractor.fetchAndCacheWeatherData()
+                        if let data = try? await sharedDataInteractor.loadWeatherData() {
+                            let encoder = JSONEncoder()
+                            let encodedData = try encoder.encode(data)
+                            
+                            // Check if data is too large
+                            if encodedData.count > 65536 { // WCSession message size limit
+                                // Split data into chunks
+                                let chunks = encodedData.chunked(into: 65000)
+                                logger.notice("📦 Splitting data into \(chunks.count) chunks")
+                                
+                                // Send chunks sequentially
+                                for (index, chunk) in chunks.enumerated() {
+                                    let chunkMessage: [String: Any] = [
+                                        "type": "chunk",
+                                        "index": index,
+                                        "total": chunks.count,
+                                        "data": chunk
+                                    ]
+                                    session.sendMessage(chunkMessage, replyHandler: { response in
+                                        self.logger.notice("✅ Chunk \(index + 1)/\(chunks.count) acknowledged: \(response)")
+                                    }, errorHandler: { error in
+                                        self.logger.error("❌ Failed to send chunk \(index + 1): \(error.localizedDescription)")
+                                    })
+                                }
+                                replyHandler(["status": "chunked", "chunks": chunks.count])
+                            } else {
+                                replyHandler(["weatherData": encodedData])
+                                logger.notice("✅ Sent weather data to watch")
+                            }
+                        } else {
+                            replyHandler(["error": "No data available"])
+                            logger.error("❌ No weather data available")
+                        }
+                    } catch {
+                        replyHandler(["error": error.localizedDescription])
+                        logger.error("❌ Failed to fetch weather data: \(error)")
+                    }
+                }
+                
+            default:
+                replyHandler(["status": "unknown"])
+                logger.error("❌ Unknown request type")
             }
         } else {
-            replyHandler(["status": "unknown"])
-            logger.error("❌ Unknown request type")
+            replyHandler(["status": "error", "message": "missing type"])
+            logger.error("❌ Message missing type field")
         }
     }
     
