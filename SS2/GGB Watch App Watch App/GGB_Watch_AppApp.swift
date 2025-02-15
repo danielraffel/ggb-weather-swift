@@ -29,84 +29,41 @@ struct GGB_Watch_AppApp: App {
     private func loadInitialData() async {
         logger.notice("⌚️ Loading initial data...")
         
-        // Try up to 3 times with exponential backoff
-        for attempt in 1...3 {
-            do {
-                if let data = try await dataInteractor.loadWeatherData() {
-                    logger.notice("✅ Loaded data with \(data.weatherData.count) items")
-                    WidgetCenter.shared.reloadAllTimelines()
-                    return
-                } else {
-                    logger.notice("⚠️ No data available in cache on attempt \(attempt)")
-                }
-            } catch {
-                logger.error("❌ Attempt \(attempt): \(error.localizedDescription)")
-                if attempt < 3 {
-                    try? await Task.sleep(nanoseconds: UInt64(pow(2.0, Double(attempt)) * 1_000_000_000))
-                }
-            }
-        }
-        
-        // If all retries failed, request data from iOS app
-        if WCSession.isSupported() {
-            let session = WCSession.default
-            if session.activationState != .activated {
-                session.activate()
-                // Wait briefly for activation
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
+        while true {
+            if let data = try? await dataInteractor.loadWeatherData() {
+                logger.notice("✅ Loaded data with \(data.weatherData.count) items")
+                WidgetCenter.shared.reloadAllTimelines()
+                return
             }
             
-            // Try requesting data up to 3 times
-            for attempt in 1...3 {
-                guard session.isReachable else {
-                    logger.error("❌ iOS app not reachable before attempt \(attempt). Waiting before retry...")
-                    try? await Task.sleep(nanoseconds: UInt64(pow(2.0, Double(attempt)) * 1_000_000_000))
-                    continue
-                }
-                
-                logger.notice("📱 Requesting data from iOS app (attempt \(attempt)/3)...")
-                do {
-                    let reply = try await withCheckedThrowingContinuation { continuation in
-                        session.sendMessage(
-                            ["type": "requestData", "request": "weatherData", "chunkSize": 16384, "attempt": attempt]
-                        ) { reply in
-                            continuation.resume(returning: reply)
-                        } errorHandler: { error in
-                            continuation.resume(throwing: error)
-                        }
-                    }
-                    
-                    if reply["status"] as? String == "ready" {
-                        logger.notice("✅ Ready to receive chunked data. Waiting for chunks...")
-                        do {
-                            try await withTimeout(seconds: 10) {
-                                while self.sessionDelegate.currentReceivedChunks == 0 {
-                                    guard session.isReachable else {
-                                        throw WatchConnectionError.connectionLost
-                                    }
-                                    try await Task.sleep(nanoseconds: 500_000_000)
+            logger.notice("📱 Requesting data from iOS app...")
+            do {
+                try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                    WCSession.default.sendMessage(["request": "weatherData"]) { reply in
+                        if let encodedData = reply["weatherData"] as? Data {
+                            Task {
+                                do {
+                                    let decodedData = try JSONDecoder().decode(CachedWeatherData.self, from: encodedData)
+                                    try await self.dataInteractor.saveWeatherData(decodedData)
+                                    logger.notice("✅ Received and saved data from iOS app")
+                                    WidgetCenter.shared.reloadAllTimelines()
+                                    continuation.resume()
+                                } catch {
+                                    continuation.resume(throwing: error)
                                 }
                             }
-                            return // Success! Data transfer started
-                        } catch is TimeoutError {
-                            logger.error("⏰ Timeout waiting for chunks on attempt \(attempt)")
-                        } catch {
-                            logger.error("❌ Connection error while waiting for chunks: \(error.localizedDescription)")
+                        } else {
+                            continuation.resume(throwing: WatchConnectionError.connectionLost)
                         }
-                    } else {
-                        logger.error("❌ Failed to initiate transfer: unexpected response \(reply)")
+                    } errorHandler: { error in
+                        continuation.resume(throwing: error)
                     }
-                } catch {
-                    logger.error("❌ Failed to request data (attempt \(attempt)): \(error.localizedDescription)")
                 }
-                
-                if attempt < 3 {
-                    try? await Task.sleep(nanoseconds: UInt64(pow(2.0, Double(attempt)) * 1_000_000_000))
-                }
+                return
+            } catch {
+                logger.error("❌ Failed to get data: \(error.localizedDescription)")
+                try? await Task.sleep(nanoseconds: 5_000_000_000)
             }
-            logger.error("❌ All attempts to request data from iOS app failed. Please check if the iOS app is running and handling watch requests.")
-        } else {
-            logger.error("❌ WatchConnectivity not supported on this device")
         }
     }
 
@@ -116,12 +73,12 @@ struct GGB_Watch_AppApp: App {
 
     // Helper function for timeout
     private func withTimeout<T>(seconds: TimeInterval, operation: @escaping () async throws -> T) async throws -> T {
-        try await withThrowingTaskGroup(of: T.self) { group in
-            group.addTask {
+        try await withThrowingTaskGroup(of: T.self, body: { group in
+            group.addTask(priority: .userInitiated) {
                 try await operation()
             }
             
-            group.addTask {
+            group.addTask(priority: .userInitiated) {
                 try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
                 throw TimeoutError()
             }
@@ -129,7 +86,7 @@ struct GGB_Watch_AppApp: App {
             let result = try await group.next()!
             group.cancelAll()
             return result
-        }
+        })
     }
 
     private struct TimeoutError: Error {}
@@ -164,7 +121,7 @@ class WatchSessionDelegate: NSObject, ObservableObject, WCSessionDelegate {
     }
     
     func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
-        logger.notice("📥 Received user info transfer")
+        logger.notice("�� Received user info transfer")
         if let weatherData = userInfo["weatherData"] as? Data {
             Task {
                 do {

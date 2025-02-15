@@ -35,40 +35,31 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     }
     
     private func createTemplate(for complication: CLKComplication) -> CLKComplicationTemplate? {
+        // Get first weather data item from cache
+        guard let weatherData = cachedWeatherData?.weatherData.first else { 
+            return nil 
+        }
+        
         switch complication.family {
         case .graphicCircular:
-            let template = CLKComplicationTemplateGraphicCircularView(
+            return CLKComplicationTemplateGraphicCircularView(
                 GGB_Watch_Widget_ExtensionEntryView(entry: WeatherWidgetEntry(
                     date: Date(),
-                    weatherData: WeatherData(
-                        time: Date(),
-                        temperature: 72,
-                        cloudCover: 30,
-                        windSpeed: 15,
-                        precipitationProbability: 20
-                    ),
+                    weatherData: weatherData,
                     error: nil,
                     bridgeImage: cachedWeatherData?.bridgeImage
                 ))
             )
-            return template
             
         case .graphicRectangular:
-            let template = CLKComplicationTemplateGraphicRectangularFullView(
+            return CLKComplicationTemplateGraphicRectangularFullView(
                 GGB_Watch_Widget_ExtensionEntryView(entry: WeatherWidgetEntry(
                     date: Date(),
-                    weatherData: WeatherData(
-                        time: Date(),
-                        temperature: 72,
-                        cloudCover: 30,
-                        windSpeed: 15,
-                        precipitationProbability: 20
-                    ),
+                    weatherData: weatherData,
                     error: nil,
                     bridgeImage: cachedWeatherData?.bridgeImage
                 ))
             )
-            return template
             
         default:
             return nil

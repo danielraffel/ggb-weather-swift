@@ -13,7 +13,7 @@ public final class WatchDataInteractor: WatchDataInteractorProtocol {
     }
     
     public func loadWeatherData() async throws -> [WeatherData] {
-        guard let cachedData = try await sharedDataInteractor.loadWeatherData() else {
+        guard let cachedData = try await sharedDataInteractor.loadWeatherData(maxRetries: 3, retryDelay: 2.0) else {
             throw SharedDataError.cacheEmpty
         }
         return cachedData.weatherData

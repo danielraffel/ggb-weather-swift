@@ -32,12 +32,6 @@ public struct CachedWeatherData: Codable {
     }
 }
 
-public protocol SharedDataInteractorProtocol {
-    func saveWeatherData(_ data: CachedWeatherData) async throws
-    func loadWeatherData() async throws -> CachedWeatherData?
-    func clearCache() async throws
-}
-
 public enum SharedDataError: LocalizedError {
     case saveFailed
     case loadFailed

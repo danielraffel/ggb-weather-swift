@@ -9,6 +9,7 @@ import WidgetKit
 import SwiftUI
 import Foundation
 import WatchKit
+import AppIntents
 
 @main
 struct GGB_Watch_Widget_Extension: Widget {
@@ -86,19 +87,12 @@ struct GGB_Watch_Widget_ExtensionEntryView: View {
     let sampleImage = UIImage(systemName: "bridge")?.withTintColor(.orange)
     let bridgeImageData = sampleImage?.pngData()
     
-    let entry1 = WeatherWidgetEntry(
+    let entry = WeatherWidgetEntry(
         date: Date(),
         weatherData: weatherData,
         error: nil,
         bridgeImage: bridgeImageData
     )
     
-    let entry2 = WeatherWidgetEntry(
-        date: Date(),
-        weatherData: nil,
-        error: "No data",
-        bridgeImage: nil
-    )
-    
-    return [entry1, entry2]
+    return [entry]
 }

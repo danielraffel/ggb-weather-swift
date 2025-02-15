@@ -43,7 +43,7 @@ struct WeatherWidgetTimelineProvider: TimelineProvider {
         logger.notice("📸 Getting widget snapshot...")
         Task {
             do {
-                let cachedData = try await dataInteractor.loadWeatherData()
+                let cachedData = try await dataInteractor.loadWeatherData(maxRetries: 3, retryDelay: 2.0)
                 logger.notice("✅ Loaded cached data for snapshot. Items: \(cachedData?.weatherData.count ?? 0)")
                 let entry = WeatherWidgetEntry(
                     date: Date(),
@@ -68,7 +68,7 @@ struct WeatherWidgetTimelineProvider: TimelineProvider {
         logger.notice("🕒 Getting widget timeline...")
         Task {
             do {
-                let cachedData = try await dataInteractor.loadWeatherData()
+                let cachedData = try await dataInteractor.loadWeatherData(maxRetries: 3, retryDelay: 2.0)
                 logger.notice("✅ Loaded cached data for timeline. Items: \(cachedData?.weatherData.count ?? 0)")
                 let currentDate = Date()
                 
@@ -119,7 +119,7 @@ struct WeatherWidgetTimelineProvider: TimelineProvider {
     
     private func getWeatherEntry() async throws -> WeatherWidgetEntry {
         do {
-            if let cachedData = try await dataInteractor.loadWeatherData() {
+            if let cachedData = try await dataInteractor.loadWeatherData(maxRetries: 3, retryDelay: 2.0) {
                 logger.notice("✅ Loaded cached data for widget")
                 return WeatherWidgetEntry(
                     date: .now,

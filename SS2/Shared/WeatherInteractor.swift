@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 @globalActor actor WeatherActor {
     static let shared = WeatherActor()
@@ -18,6 +19,7 @@ final class WeatherInteractor: @unchecked Sendable, WeatherInteractorProtocol {
     private let longitude = -122.4783
     private let dateFormatter: DateFormatter
     private let sharedDataInteractor: SharedDataInteractorProtocol
+    private let logger = Logger(subsystem: "generouscorp.ggb", category: "WeatherInteractor")
     
     init(sharedDataInteractor: SharedDataInteractorProtocol = SharedDataInteractor()) {
         self.sharedDataInteractor = sharedDataInteractor
@@ -93,10 +95,18 @@ final class WeatherInteractor: @unchecked Sendable, WeatherInteractorProtocol {
     
     @WeatherActor
     public func fetchAndCacheWeatherData() async throws -> [WeatherData] {
+        logger.notice("🌤️ Starting weather data fetch...")
         let weatherData = try await fetchWeatherData()
+        logger.notice("✅ Fetched weather data with \(weatherData.count) items")
         
         // Fetch bridge image
+        logger.notice("🌉 Fetching bridge image...")
         let bridgeImageData = try? await fetchBridgeImage()
+        if bridgeImageData != nil {
+            logger.notice("✅ Fetched bridge image")
+        } else {
+            logger.error("⚠️ Failed to fetch bridge image")
+        }
         
         // Cache both weather data and bridge image
         let cachedData = CachedWeatherData(
@@ -104,7 +114,13 @@ final class WeatherInteractor: @unchecked Sendable, WeatherInteractorProtocol {
             timestamp: Date(),
             bridgeImage: bridgeImageData
         )
-        try await sharedDataInteractor.saveWeatherData(cachedData)
+        
+        logger.notice("💾 Caching weather data and bridge image...")
+        try await Task.detached {
+            try await self.sharedDataInteractor.saveWeatherData(cachedData)
+        }.value
+        logger.notice("✅ Successfully cached weather data and bridge image")
+        
         return weatherData
     }
     
@@ -117,7 +133,7 @@ final class WeatherInteractor: @unchecked Sendable, WeatherInteractorProtocol {
     
     @WeatherActor
     public func loadCachedWeatherData() async throws -> [WeatherData] {
-        guard let cachedData = try await sharedDataInteractor.loadWeatherData() else {
+        guard let cachedData = try await sharedDataInteractor.loadWeatherData(maxRetries: 3, retryDelay: 2.0) else {
             throw SharedDataError.cacheEmpty
         }
         return cachedData.weatherData
