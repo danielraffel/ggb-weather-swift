@@ -155,11 +155,11 @@ struct GGB_Watch_Widget_ExtensionEntryView: View {
                     .foregroundColor(.red)
             } else if let weather = entry.weatherData {
                 VStack(spacing: 2) {
-                    Text("\(Int(weather.temperature))°")
+                    Text("\(String(format: "%.1f", weather.temperature))°F")
                         .font(.system(.body, design: .rounded))
                         .bold()
                     
-                    Text("\(Int(weather.windSpeed))mph")
+                    Text("\(String(format: "%.1f", weather.windSpeed))mph")
                         .font(.system(.caption2, design: .rounded))
                     
                     if weather.precipitationProbability > 0 {
@@ -186,9 +186,9 @@ struct GGB_Watch_Widget_ExtensionEntryView: View {
 } timeline: {
     let weatherData = WeatherData(
         time: Date(),
-        temperature: 72,
+        temperature: 72.5,
         cloudCover: 30,
-        windSpeed: 15,
+        windSpeed: 15.2,
         precipitationProbability: 20
     )
     

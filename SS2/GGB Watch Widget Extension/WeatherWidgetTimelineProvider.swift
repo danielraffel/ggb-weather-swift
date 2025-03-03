@@ -138,6 +138,30 @@ struct WeatherWidgetTimelineProvider: TimelineProvider {
         return entry
     }
     
+    private func findCurrentWeather(from weatherData: [WeatherData]) -> WeatherData? {
+        let now = Date()
+        let calendar = Calendar.current
+        
+        // First try to find exact hour match
+        if let exactMatch = weatherData.first(where: { data in
+            calendar.compare(data.time, to: now, toGranularity: .hour) == .orderedSame
+        }) {
+            Self.logger.notice("🎯 Found exact hour match for current time: \(exactMatch.time)")
+            return exactMatch
+        }
+        
+        // If no exact match, find closest time
+        let closestMatch = weatherData.min(by: { a, b in
+            abs(a.time.timeIntervalSince(now)) < abs(b.time.timeIntervalSince(now))
+        })
+        
+        if let closest = closestMatch {
+            Self.logger.notice("🔍 Found closest time match: \(closest.time), \(abs(closest.time.timeIntervalSince(now))) seconds from now")
+        }
+        
+        return closestMatch
+    }
+    
     func getSnapshot(in context: Context, completion: @escaping (WeatherWidgetEntry) -> Void) {
         Self.logger.notice("📸 Getting widget snapshot...")
         Task {
@@ -145,11 +169,12 @@ struct WeatherWidgetTimelineProvider: TimelineProvider {
                 let cachedData = try await dataInteractor.loadWeatherData(maxRetries: 3, retryDelay: 2.0)
                 Self.logger.notice("📸 Widget snapshot data loaded: \(cachedData?.weatherData.count ?? 0) items")
                 
-                if let weatherData = cachedData?.weatherData.first {
-                    Self.logger.notice("🌡️ Widget snapshot weather: \(weatherData.temperature)°, \(weatherData.windSpeed)mph")
+                if let weatherData = cachedData?.weatherData, !weatherData.isEmpty {
+                    let currentWeather = findCurrentWeather(from: weatherData) ?? weatherData.first!
+                    Self.logger.notice("🌡️ Widget snapshot weather: \(currentWeather.temperature)°, \(currentWeather.windSpeed)mph")
                     let entry = WeatherWidgetEntry(
                         date: Date(),
-                        weatherData: weatherData,
+                        weatherData: currentWeather,
                         error: nil,
                         bridgeImage: cachedData?.bridgeImage
                     )
@@ -189,11 +214,23 @@ struct WeatherWidgetTimelineProvider: TimelineProvider {
                 
                 if let weatherData = cachedData?.weatherData, !weatherData.isEmpty {
                     let currentDate = Date()
-                    let entries = weatherData
-                        .filter { $0.time > currentDate }
-                        .prefix(12)
+                    // First create an entry for the current time
+                    let currentWeather = findCurrentWeather(from: weatherData) ?? weatherData.first!
+                    var allEntries: [WeatherWidgetEntry] = [
+                        WeatherWidgetEntry(
+                            date: currentDate,
+                            weatherData: currentWeather,
+                            error: nil,
+                            bridgeImage: cachedData?.bridgeImage
+                        )
+                    ]
+                    
+                    // Then add future entries
+                    let futureEntries = weatherData
+                        .filter { $0.time > currentDate && $0.time != currentWeather.time }
+                        .prefix(11) // One less since we already have the current entry
                         .map { data in
-                            Self.logger.notice("📊 Widget entry: \(data.time), temp: \(data.temperature)°")
+                            Self.logger.notice("📊 Widget future entry: \(data.time), temp: \(data.temperature)°")
                             return WeatherWidgetEntry(
                                 date: data.time,
                                 weatherData: data,
@@ -202,24 +239,18 @@ struct WeatherWidgetTimelineProvider: TimelineProvider {
                             )
                         }
                     
-                    if entries.isEmpty {
-                        Self.logger.notice("⚠️ No future entries, using current data")
-                        let entry = WeatherWidgetEntry(
-                            date: currentDate,
-                            weatherData: weatherData.first,
-                            error: nil,
-                            bridgeImage: cachedData?.bridgeImage
-                        )
-                        if let weather = weatherData.first {
-                            Self.logger.notice("🌡️ Widget using current: \(weather.temperature)°, \(weather.windSpeed)mph, bridge image: \(cachedData?.bridgeImage != nil)")
-                        }
+                    allEntries.append(contentsOf: futureEntries)
+                    
+                    if allEntries.count == 1 {
+                        // Only current entry, no future entries
+                        Self.logger.notice("🌡️ Widget using current: \(currentWeather.temperature)°, \(currentWeather.windSpeed)mph, bridge image: \(cachedData?.bridgeImage != nil)")
                         Self.logger.notice("✅ Created single entry timeline")
-                        completion(Timeline(entries: [entry], policy: .after(currentDate.addingTimeInterval(30))))
+                        completion(Timeline(entries: allEntries, policy: .after(currentDate.addingTimeInterval(30))))
                         return
                     }
                     
-                    Self.logger.notice("✅ Widget timeline: \(entries.count) entries, \(cachedData?.bridgeImage != nil ? "with bridge image (\(cachedData?.bridgeImage?.count ?? 0) bytes)" : "without bridge image")")
-                    completion(Timeline(entries: Array(entries), policy: .after(currentDate.addingTimeInterval(60))))
+                    Self.logger.notice("✅ Widget timeline: \(allEntries.count) entries, \(cachedData?.bridgeImage != nil ? "with bridge image (\(cachedData?.bridgeImage?.count ?? 0) bytes)" : "without bridge image")")
+                    completion(Timeline(entries: allEntries, policy: .after(currentDate.addingTimeInterval(60))))
                 } else {
                     Self.logger.error("❌ No weather data for widget timeline")
                     let entry = WeatherWidgetEntry(
