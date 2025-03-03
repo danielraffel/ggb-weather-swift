@@ -16,7 +16,7 @@ struct BridgeImageView: View {
                     .aspectRatio(contentMode: isExpanded ? .fit : .fill)
                     .frame(maxWidth: .infinity)
                     .frame(height: isExpanded ? nil : 220)
-                    .offset(y: 25)
+                    .offset(y: 18)
                     .clipped()
                     .opacity(isLoading ? 0.5 : 1.0)
                     .background(Color.gray.opacity(0.1))

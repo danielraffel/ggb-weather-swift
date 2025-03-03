@@ -186,24 +186,30 @@ struct GGBWidgetEntryView: View {
     }
     
     private var smallWidget: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Current GGB Weather")
-                .font(.caption)
-                .foregroundColor(.orange)
+        ZStack {
+            // Background
+            Color.black.opacity(0.8)
             
-            Text("\(entry.currentWeather.temperature, specifier: "%.1f")°F")
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.white)
-            
-            Text("🌧 \(entry.currentWeather.precipitationProbability, specifier: "%.0f")%")
-                .font(.caption)
-                .foregroundColor(.white)
-            
-            Text("🌬️ \(entry.currentWeather.windSpeed, specifier: "%.1f") mph")
-                .font(.caption)
-                .foregroundColor(.white)
+            // Content
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Current GGB Weather")
+                    .font(.caption)
+                    .foregroundColor(.orange)
+                
+                Text("\(entry.currentWeather.temperature, specifier: "%.1f")°F")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
+                
+                Text("💨 \(entry.currentWeather.windSpeed, specifier: "%.1f") mph")
+                    .font(.caption)
+                    .foregroundColor(.white)
+                
+                Text("🌧 \(entry.currentWeather.precipitationProbability, specifier: "%.0f")%")
+                    .font(.caption)
+                    .foregroundColor(.white)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .containerBackground(for: .widget) {
             Color.black.opacity(0.8)
         }
@@ -220,10 +226,10 @@ struct GGBWidgetEntryView: View {
                 HStack(spacing: 12) {
                     Text("🌡️ \(entry.currentWeather.temperature, specifier: "%.1f")°F")
                         .font(.caption)
+                    Text("💨 \(entry.currentWeather.windSpeed, specifier: "%.1f") mph")
+                        .font(.caption)
                     Text("🌧 \(entry.currentWeather.precipitationProbability, specifier: "%.0f")%")
                         .font(.caption)
-                    // Text("🌬️ \(entry.currentWeather.windSpeed, specifier: "%.1f") mph")
-                    //     .font(.caption)
                 }
                 .foregroundColor(.white)
             }
@@ -246,7 +252,11 @@ struct GGBWidgetEntryView: View {
                         .font(.caption)
                         .foregroundColor(.white)
                     
-                    Text("\(entry.bestTime.precipitationProbability, specifier: "🌧 %.0f")% chance")
+                    Text("\(entry.bestTime.windSpeed, specifier: "💨 %.1f") mph")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                    
+                    Text("\(entry.bestTime.precipitationProbability, specifier: "🌧️ %.0f")%")
                         .font(.caption)
                         .foregroundColor(.white)
                 }
@@ -267,7 +277,11 @@ struct GGBWidgetEntryView: View {
                         .font(.caption)
                         .foregroundColor(.white)
                     
-                    Text("\(entry.secondBestTime.precipitationProbability, specifier: "%.0f")% chance 🌧️")
+                    Text("\(entry.secondBestTime.windSpeed, specifier: "%.1f") mph 💨")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                    
+                    Text("\(entry.secondBestTime.precipitationProbability, specifier: "%.0f")% 🌧️")
                         .font(.caption)
                         .foregroundColor(.white)
                 }
