@@ -7,48 +7,56 @@
 
 import WidgetKit
 import SwiftUI
+import os
+
+private let logger = Logger(subsystem: "com.danielraffel.ggbweather", category: "GGBWidget")
 
 struct Provider: TimelineProvider {
+    private let sharedDataInteractor = SharedDataInteractor()
+    
     func placeholder(in context: Context) -> WeatherEntry {
+        logger.debug("⚡️ Providing placeholder entry")
         let placeholderWeather = WeatherData(
             time: Date(),
-            temperature: 47.1,
-            cloudCover: 99.0,
-            windSpeed: 5.4,
-            precipitationProbability: 6.0
+            temperature: 68.0,
+            cloudCover: 20.0,
+            windSpeed: 8.0,
+            precipitationProbability: 10.0
         )
         
         let bestPlaceholderTime = BestVisitTime(
-            time: createDate(from: "12:00 PM"),
-            temperature: 50.1,
-            precipitationProbability: 3.0,
-            cloudCover: 99.0,
-            windSpeed: 3.4,
-            score: 0
+            time: createDate(from: "2:00 PM"),
+            temperature: 72.0,
+            precipitationProbability: 5.0,
+            cloudCover: 15.0,
+            windSpeed: 6.0,
+            score: 85
         )
         
         let secondBestPlaceholderTime = BestVisitTime(
-            time: createDate(from: "1:00 PM"),
-            temperature: 48.0,
-            precipitationProbability: 2.0,
-            cloudCover: 90.0,
-            windSpeed: 4.0,
-            score: 5
+            time: createDate(from: "3:00 PM"),
+            temperature: 70.0,
+            precipitationProbability: 8.0,
+            cloudCover: 25.0,
+            windSpeed: 7.0,
+            score: 80
         )
         
         // Load placeholder image from bundle
         let imageName = "placeholder_bridge"
         if let image = UIImage(named: imageName),
-           let imageData = image.pngData() {
+           let imageData = image.jpegData(compressionQuality: 0.5) {
+            logger.debug("✅ Created placeholder with image")
             return WeatherEntry(
                 date: Date(),
                 currentWeather: placeholderWeather,
                 bestTime: bestPlaceholderTime,
-                secondBestTime: secondBestPlaceholderTime, // Use distinct second best time
+                secondBestTime: secondBestPlaceholderTime,
                 imageData: imageData
             )
         }
         
+        logger.debug("⚠️ Created placeholder without image")
         return WeatherEntry(
             date: Date(),
             currentWeather: placeholderWeather,
@@ -62,74 +70,123 @@ struct Provider: TimelineProvider {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "h:mm a"
         dateFormatter.timeZone = TimeZone(identifier: "America/Los_Angeles")
-        return dateFormatter.date(from: timeString) ?? Date() // Fallback to current date if parsing fails
+        return dateFormatter.date(from: timeString) ?? Date()
     }
     
     func getSnapshot(in context: Context, completion: @escaping (WeatherEntry) -> ()) {
+        logger.debug("📸 Getting snapshot")
         Task {
             if context.isPreview {
+                logger.debug("📸 Providing preview snapshot")
                 completion(placeholder(in: context))
                 return
             }
             
             do {
-                let imageData = try await fetchBridgeImage()
-                let entry = placeholder(in: context)
-                completion(WeatherEntry(
-                    date: entry.date,
-                    currentWeather: entry.currentWeather,
-                    bestTime: entry.bestTime,
-                    secondBestTime: entry.secondBestTime,
-                    imageData: imageData
-                ))
+                if let cachedData = try await sharedDataInteractor.loadWeatherData(maxRetries: 2, retryDelay: 1.0) {
+                    logger.debug("📸 Using cached data for snapshot")
+                    let entry = createEntry(from: cachedData)
+                    completion(entry)
+                    return
+                }
+                
+                logger.debug("📸 Falling back to placeholder for snapshot")
+                completion(placeholder(in: context))
             } catch {
+                logger.error("❌ Snapshot error: \(error.localizedDescription)")
                 completion(placeholder(in: context))
             }
         }
     }
     
     func getTimeline(in context: Context, completion: @escaping (Timeline<WeatherEntry>) -> ()) {
+        logger.debug("⏰ Getting timeline")
         Task {
             do {
+                // Try to load cached data first
+                if let cachedData = try await sharedDataInteractor.loadWeatherData(maxRetries: 3, retryDelay: 2.0) {
+                    logger.debug("✅ Using cached data for timeline")
+                    let entry = createEntry(from: cachedData)
+                    let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
+                    completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
+                    
+                    // Force widget to reload after getting new data
+                    WidgetCenter.shared.reloadAllTimelines()
+                    return
+                }
+                
+                // Fallback to network if no cache
+                logger.debug("🌐 Fetching fresh data for timeline")
                 let interactor = await WeatherInteractor()
                 let weatherData = try await interactor.fetchWeatherData()
                 let imageData = try? await fetchBridgeImage()
                 
-                // Get current weather
-                let currentWeather = findCurrentWeather(from: weatherData)
-                
-                // Calculate best times
-                let bestTimes = calculateBestTimes(from: weatherData)
                 let entry = WeatherEntry(
                     date: Date(),
-                    currentWeather: currentWeather,
-                    bestTime: bestTimes[0],
-                    secondBestTime: bestTimes[1],
+                    currentWeather: findCurrentWeather(from: weatherData),
+                    bestTime: calculateBestTimes(from: weatherData)[0],
+                    secondBestTime: calculateBestTimes(from: weatherData)[1],
                     imageData: imageData
                 )
                 
-                let nextUpdate = Calendar.current.date(byAdding: .minute, value: 30, to: Date())!
-                let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
-                completion(timeline)
+                let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
+                completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
+                
+                // Force widget to reload after getting new data
+                WidgetCenter.shared.reloadAllTimelines()
             } catch {
-                completion(Timeline(entries: [placeholder(in: context)], policy: .after(Date(timeIntervalSinceNow: 3600))))
+                logger.error("❌ Timeline error: \(error.localizedDescription)")
+                completion(Timeline(entries: [placeholder(in: context)], policy: .after(Date(timeIntervalSinceNow: 900))))
             }
         }
     }
     
+    private func createEntry(from cachedData: CachedWeatherData) -> WeatherEntry {
+        // Only take what we need - last 24 hours of data
+        let recentData = Array(cachedData.weatherData.suffix(24))
+        let bestTimes = calculateBestTimes(from: recentData)
+        
+        return WeatherEntry(
+            date: Date(),
+            currentWeather: findCurrentWeather(from: recentData),
+            bestTime: bestTimes[0],
+            secondBestTime: bestTimes[1],
+            imageData: cachedData.bridgeImage
+        )
+    }
+    
     private func fetchBridgeImage() async throws -> Data {
+        logger.debug("🌉 Fetching bridge image")
+        // First try to get cached image
+        if let cachedData = try? await sharedDataInteractor.loadWeatherData(maxRetries: 2, retryDelay: 1.0),
+           let cachedImage = cachedData.bridgeImage {
+            logger.debug("✅ Using cached bridge image")
+            return cachedImage
+        }
+        
+        // If no cached image, fetch and compress
+        logger.debug("🌐 Downloading bridge image")
         let url = URL(string: "https://raw.githubusercontent.com/danielraffel/ggb/main/ggb.screenshot.png")!
         let (data, _) = try await URLSession.shared.data(from: url)
+        if let image = UIImage(data: data),
+           let compressedData = image.jpegData(compressionQuality: 0.5) {
+            logger.debug("✅ Compressed bridge image")
+            return compressedData
+        }
         return data
     }
     
     private func calculateBestTimes(from weatherData: [WeatherData]) -> [BestVisitTime] {
+        let now = Date()
+        let twelveHoursFromNow = Calendar.current.date(byAdding: .hour, value: 12, to: now) ?? now
+        
         let filteredData = weatherData.filter { data in
             let hour = Calendar.current.component(.hour, from: data.time)
-            return hour >= 6 && hour <= 20
+            return hour >= 6 && hour <= 20 && data.time <= twelveHoursFromNow
         }
         
-        return filteredData.map { data in
+        // Limit to top 5 scores before sorting
+        return Array(filteredData.map { data in
             let tempScore = data.temperature * 2
             let rainScore = 100 - data.precipitationProbability
             let cloudScore = (100 - data.cloudCover) / 2
@@ -143,7 +200,7 @@ struct Provider: TimelineProvider {
                 windSpeed: data.windSpeed,
                 score: tempScore + rainScore + cloudScore + windScore
             )
-        }.sorted { $0.score > $1.score }
+        }.sorted { $0.score > $1.score }.prefix(5))
     }
     
     private func findCurrentWeather(from weatherData: [WeatherData]) -> WeatherData {
@@ -186,32 +243,41 @@ struct GGBWidgetEntryView: View {
     }
     
     private var smallWidget: some View {
-        ZStack {
-            // Background
-            Color.black.opacity(0.8)
+        VStack(spacing: 8) {
+            Text("Current Weather")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(.white)
             
-            // Content
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Current GGB Weather")
-                    .font(.caption)
-                    .foregroundColor(.orange)
-                
+            VStack(spacing: 4) {
                 Text("\(entry.currentWeather.temperature, specifier: "%.1f")°F")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.white)
                 
-                Text("💨 \(entry.currentWeather.windSpeed, specifier: "%.1f") mph")
-                    .font(.caption)
-                    .foregroundColor(.white)
-                
-                Text("🌧 \(entry.currentWeather.precipitationProbability, specifier: "%.0f")%")
-                    .font(.caption)
-                    .foregroundColor(.white)
+                HStack(spacing: 8) {
+                    Text("💨 \(entry.currentWeather.windSpeed, specifier: "%.1f")")
+                        .font(.caption)
+                    Text("🌧 \(entry.currentWeather.precipitationProbability, specifier: "%.0f")%")
+                        .font(.caption)
+                }
+                .foregroundColor(.white)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .containerBackground(for: .widget) {
-            Color.black.opacity(0.8)
+            if let imageData = entry.imageData,
+               let uiImage = UIImage(data: imageData) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .offset(x: -20, y: -20)
+                    .padding(.bottom, -20)
+                    .padding(.horizontal, -20)
+                    .clipped()
+                    // .overlay(Color.black.opacity(0.3))
+            } else {
+                Color.black.opacity(0.8)
+            }
         }
     }
     
