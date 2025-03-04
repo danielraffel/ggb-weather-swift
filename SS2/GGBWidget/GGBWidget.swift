@@ -24,6 +24,33 @@ struct Provider: TimelineProvider {
             precipitationProbability: 10.0
         )
         
+        // For the current weather only layout
+        if context.family == .systemMedium && context.isPreview {
+            let emptyBestTime = BestVisitTime(
+                time: createDate(from: "2:00 PM"),
+                temperature: 72.0,
+                precipitationProbability: 5.0,
+                cloudCover: 15.0,
+                windSpeed: 6.0,
+                score: 0  // Set score to 0 to show current weather only layout
+            )
+            
+            // Load placeholder image from bundle
+            let imageName = "placeholder_bridge"
+            if let image = UIImage(named: imageName),
+               let imageData = image.jpegData(compressionQuality: 0.5) {
+                logger.debug("✅ Created placeholder with image")
+                return WeatherEntry(
+                    date: Date(),
+                    currentWeather: placeholderWeather,
+                    bestTime: emptyBestTime,
+                    secondBestTime: emptyBestTime,
+                    imageData: imageData
+                )
+            }
+        }
+        
+        // For the full layout with best times
         let bestPlaceholderTime = BestVisitTime(
             time: createDate(from: "2:00 PM"),
             temperature: 72.0,
@@ -237,30 +264,42 @@ struct GGBWidgetEntryView: View {
         switch family {
         case .systemSmall:
             smallWidget
+        case .systemMedium:
+            if entry.bestTime.score > 0 {
+                mediumWidget
+            } else {
+                mediumCurrentWeatherWidget
+            }
         default:
             mediumWidget
         }
     }
     
     private var smallWidget: some View {
-        VStack(spacing: 8) {
-            Text("Current Weather")
-                .font(.system(size: 12, weight: .bold))
-                .foregroundColor(.white)
+        VStack {
+            Spacer() // Push content down
             
-            VStack(spacing: 4) {
-                Text("\(entry.currentWeather.temperature, specifier: "%.1f")°F")
-                    .font(.system(size: 24, weight: .bold))
+            VStack(spacing: 2) {
+                Text("Current Weather")
+                    .font(.system(size: 13, weight: .bold))
                     .foregroundColor(.white)
+                    .lineLimit(1)
                 
-                HStack(spacing: 8) {
-                    Text("💨 \(entry.currentWeather.windSpeed, specifier: "%.1f")")
-                        .font(.caption)
-                    Text("🌧 \(entry.currentWeather.precipitationProbability, specifier: "%.0f")%")
-                        .font(.caption)
+                HStack(spacing: 2) {
+                    Text("🌡️\(entry.currentWeather.temperature, specifier: "%.0f")°F")
+                        .font(.system(size: 10))
+                    Text("💨\(entry.currentWeather.windSpeed, specifier: "%.0f") mph")
+                        .font(.system(size: 10))
+                    Text("🌧\(entry.currentWeather.precipitationProbability, specifier: "%.0f")%")
+                        .font(.system(size: 10))
                 }
                 .foregroundColor(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.9)
             }
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 4)
+            .padding(.bottom, 4) // Minimal padding at the bottom
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .containerBackground(for: .widget) {
@@ -274,7 +313,17 @@ struct GGBWidgetEntryView: View {
                     .padding(.bottom, -20)
                     .padding(.horizontal, -20)
                     .clipped()
-                    // .overlay(Color.black.opacity(0.3))
+                    .overlay(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                .clear,
+                                .clear,
+                                .black.opacity(0.4)
+                            ]),
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
             } else {
                 Color.black.opacity(0.8)
             }
@@ -368,6 +417,53 @@ struct GGBWidgetEntryView: View {
         }
     }
     
+    private var mediumCurrentWeatherWidget: some View {
+        VStack {
+            Spacer()
+            
+            // Current Weather (Bottom)
+            VStack(spacing: 2) {
+                Text("Current Weather")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white)
+                
+                HStack(spacing: 12) {
+                    Text("🌡️ \(entry.currentWeather.temperature, specifier: "%.1f")°F")
+                        .font(.caption)
+                    Text("💨 \(entry.currentWeather.windSpeed, specifier: "%.1f") mph")
+                        .font(.caption)
+                    Text("🌧 \(entry.currentWeather.precipitationProbability, specifier: "%.0f")%")
+                        .font(.caption)
+                }
+                .foregroundColor(.white)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 4) // Minimal padding at the bottom
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .containerBackground(for: .widget) {
+            if let imageData = entry.imageData,
+               let uiImage = UIImage(data: imageData) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .padding(.horizontal, -20)
+                    .overlay(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                .clear,
+                                .clear,
+                                .black.opacity(0.4)
+                            ]),
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+            }
+        }
+    }
+    
     private func formatTime(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
@@ -376,15 +472,254 @@ struct GGBWidgetEntryView: View {
 }
 
 @main
-struct GGBWidget: Widget {
-    let kind: String = "GGBWidget"
+struct GGBWidget: WidgetBundle {
+    var body: some Widget {
+        SmallWeatherWidget()
+        MediumBestTimesWidget()
+        MediumCurrentWeatherWidget()
+        SmallBridgeWidget()
+        MediumBridgeWidget()
+    }
+}
+
+// Small Widget
+struct SmallWeatherWidget: Widget {
+    let kind: String = "SmallWeatherWidget"
     
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             GGBWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("GGB Best Time")
-        .description("Shows the best time to cross the Golden Gate Bridge")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .configurationDisplayName("Current Weather")
+        .description("Shows current weather at the bridge")
+        .supportedFamilies([.systemSmall])
     }
+}
+
+// Medium Widget with Best Times
+struct MediumBestTimesWidget: Widget {
+    let kind: String = "MediumBestTimesWidget"
+    
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: Provider()) { entry in
+            mediumWidget(entry: entry)
+        }
+        .configurationDisplayName("Best Times")
+        .description("Shows best times to visit and current weather")
+        .supportedFamilies([.systemMedium])
+    }
+}
+
+// Medium Widget with Current Weather Only
+struct MediumCurrentWeatherWidget: Widget {
+    let kind: String = "MediumCurrentWeatherWidget"
+    
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: Provider()) { entry in
+            mediumCurrentWeatherWidget(entry: entry)
+        }
+        .configurationDisplayName("Current Weather (Large)")
+        .description("Shows current weather in a larger format")
+        .supportedFamilies([.systemMedium])
+    }
+}
+
+// Small Bridge Widget (Image Only)
+struct SmallBridgeWidget: Widget {
+    let kind: String = "SmallBridgeWidget"
+    
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: Provider()) { entry in
+            smallBridgeWidget(entry: entry)
+        }
+        .configurationDisplayName("Bridge View (Small)")
+        .description("Shows just the bridge image")
+        .supportedFamilies([.systemSmall])
+    }
+}
+
+// Medium Bridge Widget (Image Only)
+struct MediumBridgeWidget: Widget {
+    let kind: String = "MediumBridgeWidget"
+    
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: Provider()) { entry in
+            mediumBridgeWidget(entry: entry)
+        }
+        .configurationDisplayName("Bridge View (Medium)")
+        .description("Shows just the bridge image in a larger format")
+        .supportedFamilies([.systemMedium])
+    }
+}
+
+// Move the view builders to top level for reuse
+private func mediumWidget(entry: Provider.Entry) -> some View {
+    VStack(spacing: 8) {
+        // Current Weather (Top)
+        VStack(spacing: 2) {
+            Text("Current Weather")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(.white)
+            
+            HStack(spacing: 12) {
+                Text("🌡️ \(entry.currentWeather.temperature, specifier: "%.1f")°F")
+                    .font(.caption)
+                Text("💨 \(entry.currentWeather.windSpeed, specifier: "%.1f") mph")
+                    .font(.caption)
+                Text("🌧 \(entry.currentWeather.precipitationProbability, specifier: "%.0f")%")
+                    .font(.caption)
+            }
+            .foregroundColor(.white)
+        }
+        .frame(maxWidth: .infinity)
+        
+        // Best Times (Bottom)
+        HStack(spacing: 0) {
+            // Best Time (Left)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("🥇 Best Time")
+                    .font(.caption)
+                    .foregroundColor(.yellow)
+                    .bold()
+                
+                Text(formatTime(entry.bestTime.time))
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
+                
+                Text("\(entry.bestTime.temperature, specifier: "🌡️ %.1f")°F")
+                    .font(.caption)
+                    .foregroundColor(.white)
+                
+                Text("\(entry.bestTime.windSpeed, specifier: "💨 %.1f") mph")
+                    .font(.caption)
+                    .foregroundColor(.white)
+                
+                Text("\(entry.bestTime.precipitationProbability, specifier: "🌧️ %.0f")%")
+                    .font(.caption)
+                    .foregroundColor(.white)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            
+            // Second Best Time (Right)
+            VStack(alignment: .trailing, spacing: 4) {
+                Text("Second Best 🥈")
+                    .font(.caption)
+                    .foregroundColor(.white)
+                    .bold()
+                
+                Text(formatTime(entry.secondBestTime.time))
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
+                
+                Text("\(entry.secondBestTime.temperature, specifier: "%.1f")°F 🌡️")
+                    .font(.caption)
+                    .foregroundColor(.white)
+                
+                Text("\(entry.secondBestTime.windSpeed, specifier: "%.1f") mph 💨")
+                    .font(.caption)
+                    .foregroundColor(.white)
+                
+                Text("\(entry.secondBestTime.precipitationProbability, specifier: "%.0f")% 🌧️")
+                    .font(.caption)
+                    .foregroundColor(.white)
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+    }
+    .padding(.horizontal, 16)
+    .padding(.vertical, 12)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+    .containerBackground(for: .widget) {
+        if let imageData = entry.imageData,
+           let uiImage = UIImage(data: imageData) {
+            Image(uiImage: uiImage)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .padding(.horizontal, -20)
+        }
+    }
+}
+
+private func mediumCurrentWeatherWidget(entry: Provider.Entry) -> some View {
+    VStack {
+        Spacer()
+        
+        // Current Weather (Bottom)
+        VStack(spacing: 2) {
+            Text("Current Weather")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(.white)
+            
+            HStack(spacing: 12) {
+                Text("🌡️ \(entry.currentWeather.temperature, specifier: "%.1f")°F")
+                    .font(.caption)
+                Text("💨 \(entry.currentWeather.windSpeed, specifier: "%.1f") mph")
+                    .font(.caption)
+                Text("🌧 \(entry.currentWeather.precipitationProbability, specifier: "%.0f")%")
+                    .font(.caption)
+            }
+            .foregroundColor(.white)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 4) // Minimal padding at the bottom
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .containerBackground(for: .widget) {
+        if let imageData = entry.imageData,
+           let uiImage = UIImage(data: imageData) {
+            Image(uiImage: uiImage)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .padding(.horizontal, -20)
+                .overlay(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            .clear,
+                            .clear,
+                            .black.opacity(0.4)
+                        ]),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+        }
+    }
+}
+
+private func formatTime(_ date: Date) -> String {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "h:mm a"
+    return formatter.string(from: date)
+}
+
+// View builders for the bridge-only widgets
+private func smallBridgeWidget(entry: Provider.Entry) -> some View {
+    Color.clear
+        .containerBackground(for: .widget) {
+            if let imageData = entry.imageData,
+               let uiImage = UIImage(data: imageData) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .offset(x: -20, y: -20)
+                    .padding(.bottom, -20)
+                    .padding(.horizontal, -20)
+                    .clipped()
+            }
+        }
+}
+
+private func mediumBridgeWidget(entry: Provider.Entry) -> some View {
+    Color.clear
+        .containerBackground(for: .widget) {
+            if let imageData = entry.imageData,
+               let uiImage = UIImage(data: imageData) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .padding(.horizontal, -20)
+            }
+        }
 }
