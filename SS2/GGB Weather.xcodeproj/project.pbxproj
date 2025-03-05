@@ -10,6 +10,10 @@
 		110811DA2D4D66970016D3AA /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 110811D92D4D66970016D3AA /* WidgetKit.framework */; };
 		110811DC2D4D66970016D3AA /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 110811DB2D4D66970016D3AA /* SwiftUI.framework */; };
 		110811ED2D4D66980016D3AA /* GGBWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 110811D72D4D66970016D3AA /* GGBWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		1137D9CF2D77C6B400A23D7D /* Shared in Frameworks */ = {isa = PBXBuildFile; productRef = 1137D9CE2D77C6B400A23D7D /* Shared */; };
+		1137D9D02D77C6B400A23D7D /* Shared in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 1137D9CE2D77C6B400A23D7D /* Shared */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		1137D9D32D77C6BA00A23D7D /* Shared in Frameworks */ = {isa = PBXBuildFile; productRef = 1137D9D22D77C6BA00A23D7D /* Shared */; };
+		1137D9D42D77C6BA00A23D7D /* Shared in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 1137D9D22D77C6BA00A23D7D /* Shared */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		114698952D5147AB00678349 /* SharedCacheModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114698932D5147AB00678349 /* SharedCacheModels.swift */; };
 		114698962D5147AB00678349 /* SharedDataInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114698942D5147AB00678349 /* SharedDataInteractor.swift */; };
 		114698972D5147AB00678349 /* SharedCacheModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 114698932D5147AB00678349 /* SharedCacheModels.swift */; };
@@ -95,6 +99,28 @@
 				110811ED2D4D66980016D3AA /* GGBWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1137D9D12D77C6B400A23D7D /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				1137D9D02D77C6B400A23D7D /* Shared in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1137D9D52D77C6BA00A23D7D /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				1137D9D42D77C6BA00A23D7D /* Shared in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		118B43622D4EC7B8004288CA /* Embed Watch Content */ = {
@@ -231,6 +257,7 @@
 			files = (
 				110811DC2D4D66970016D3AA /* SwiftUI.framework in Frameworks */,
 				110811DA2D4D66970016D3AA /* WidgetKit.framework in Frameworks */,
+				1137D9D32D77C6BA00A23D7D /* Shared in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -239,6 +266,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				118B43932D4EF9D6004288CA /* Inject in Frameworks */,
+				1137D9CF2D77C6B400A23D7D /* Shared in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -352,6 +380,7 @@
 				110811D32D4D66970016D3AA /* Sources */,
 				110811D42D4D66970016D3AA /* Frameworks */,
 				110811D52D4D66970016D3AA /* Resources */,
+				1137D9D52D77C6BA00A23D7D /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -362,6 +391,7 @@
 			);
 			name = GGBWidgetExtension;
 			packageProductDependencies = (
+				1137D9D22D77C6BA00A23D7D /* Shared */,
 			);
 			productName = GGBWidgetExtension;
 			productReference = 110811D72D4D66970016D3AA /* GGBWidgetExtension.appex */;
@@ -376,6 +406,7 @@
 				11138E372D34501B00B6E9B6 /* Resources */,
 				110811EE2D4D66980016D3AA /* Embed Foundation Extensions */,
 				118B43622D4EC7B8004288CA /* Embed Watch Content */,
+				1137D9D12D77C6B400A23D7D /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -389,6 +420,7 @@
 			name = "GGB Weather";
 			packageProductDependencies = (
 				118B43922D4EF9D6004288CA /* Inject */,
+				1137D9CE2D77C6B400A23D7D /* Shared */,
 			);
 			productName = SS2;
 			productReference = 11138E392D34501B00B6E9B6 /* GGB Weather.app */;
@@ -583,6 +615,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				118B43912D4EF9D6004288CA /* XCRemoteSwiftPackageReference "Inject" */,
+				1137D9CD2D77C6AD00A23D7D /* XCLocalSwiftPackageReference "Shared" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 11138E3A2D34501B00B6E9B6 /* Products */;
@@ -1377,6 +1410,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		1137D9CD2D77C6AD00A23D7D /* XCLocalSwiftPackageReference "Shared" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Shared;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		118B43912D4EF9D6004288CA /* XCRemoteSwiftPackageReference "Inject" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -1389,6 +1429,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		1137D9CE2D77C6B400A23D7D /* Shared */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1137D9CD2D77C6AD00A23D7D /* XCLocalSwiftPackageReference "Shared" */;
+			productName = Shared;
+		};
+		1137D9D22D77C6BA00A23D7D /* Shared */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1137D9CD2D77C6AD00A23D7D /* XCLocalSwiftPackageReference "Shared" */;
+			productName = Shared;
+		};
 		118B43922D4EF9D6004288CA /* Inject */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 118B43912D4EF9D6004288CA /* XCRemoteSwiftPackageReference "Inject" */;

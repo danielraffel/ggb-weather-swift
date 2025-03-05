@@ -8,11 +8,19 @@
 import WidgetKit
 import SwiftUI
 import os
+import Shared
 
 private let logger = Logger(subsystem: "com.danielraffel.ggbweather", category: "GGBWidget")
 
 struct Provider: TimelineProvider {
     private let sharedDataInteractor = SharedDataInteractor()
+    private let crossingTimeInteractor: Shared.CrossingTimeInteractor
+    
+    init() {
+        // Use the shared app group UserDefaults
+        let defaults = UserDefaults(suiteName: "group.com.danielraffel.ggbweather") ?? .standard
+        self.crossingTimeInteractor = Shared.CrossingTimeInteractor(defaults: defaults)
+    }
     
     func placeholder(in context: Context) -> WeatherEntry {
         logger.debug("⚡️ Providing placeholder entry")
@@ -20,6 +28,12 @@ struct Provider: TimelineProvider {
             time: Date(),
             temperature: 68.0,
             cloudCover: 20.0,
+            windSpeed: 8.0,
+            precipitationProbability: 10.0
+        )
+        
+        let placeholderCrossing = CrossingWeather(
+            temperature: 65.0,
             windSpeed: 8.0,
             precipitationProbability: 10.0
         )
@@ -45,6 +59,10 @@ struct Provider: TimelineProvider {
                     currentWeather: placeholderWeather,
                     bestTime: emptyBestTime,
                     secondBestTime: emptyBestTime,
+                    firstCrossing: placeholderCrossing,
+                    secondCrossing: placeholderCrossing,
+                    firstCrossingTime: nil,
+                    secondCrossingTime: nil,
                     imageData: imageData
                 )
             }
@@ -79,6 +97,10 @@ struct Provider: TimelineProvider {
                 currentWeather: placeholderWeather,
                 bestTime: bestPlaceholderTime,
                 secondBestTime: secondBestPlaceholderTime,
+                firstCrossing: placeholderCrossing,
+                secondCrossing: placeholderCrossing,
+                firstCrossingTime: nil,
+                secondCrossingTime: nil,
                 imageData: imageData
             )
         }
@@ -89,6 +111,10 @@ struct Provider: TimelineProvider {
             currentWeather: placeholderWeather,
             bestTime: bestPlaceholderTime,
             secondBestTime: secondBestPlaceholderTime,
+            firstCrossing: placeholderCrossing,
+            secondCrossing: placeholderCrossing,
+            firstCrossingTime: nil,
+            secondCrossingTime: nil,
             imageData: nil
         )
     }
@@ -112,7 +138,9 @@ struct Provider: TimelineProvider {
             do {
                 if let cachedData = try await sharedDataInteractor.loadWeatherData(maxRetries: 2, retryDelay: 1.0) {
                     logger.debug("📸 Using cached data for snapshot")
-                    let entry = createEntry(from: cachedData)
+                    let (firstDiff, secondDiff) = crossingTimeInteractor.loadSavedTimeDiffs()
+                    let crossings = crossingTimeInteractor.calculateValidCrossingTimes(firstDiff: firstDiff, secondDiff: secondDiff)
+                    let entry = createEntry(from: cachedData, firstCrossingTime: crossings.first.date, secondCrossingTime: crossings.second.date)
                     completion(entry)
                     return
                 }
@@ -130,15 +158,25 @@ struct Provider: TimelineProvider {
         logger.debug("⏰ Getting timeline")
         Task {
             do {
+                // Calculate current crossing times
+                let (firstDiff, secondDiff) = crossingTimeInteractor.loadSavedTimeDiffs()
+                var crossings = crossingTimeInteractor.calculateValidCrossingTimes(firstDiff: firstDiff, secondDiff: secondDiff)
+                
+                // Check if first crossing is in the past and recalculate if needed
+                let now = Date()
+                if crossings.first.date < now {
+                    logger.debug("🔄 First crossing is in past, recalculating times")
+                    let newCrossings = crossingTimeInteractor.calculateValidCrossingTimes(firstDiff: firstDiff, secondDiff: secondDiff)
+                    logger.debug("🕒 Updated first crossing to \(newCrossings.first.date), second to \(newCrossings.second.date)")
+                    crossings = newCrossings
+                }
+                
                 // Try to load cached data first
                 if let cachedData = try await sharedDataInteractor.loadWeatherData(maxRetries: 3, retryDelay: 2.0) {
                     logger.debug("✅ Using cached data for timeline")
-                    let entry = createEntry(from: cachedData)
-                    let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
+                    let entry = createEntry(from: cachedData, firstCrossingTime: crossings.first.date, secondCrossingTime: crossings.second.date)
+                    let nextUpdate = Calendar.current.date(byAdding: .minute, value: 1, to: Date())!
                     completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
-                    
-                    // Force widget to reload after getting new data
-                    WidgetCenter.shared.reloadAllTimelines()
                     return
                 }
                 
@@ -153,10 +191,14 @@ struct Provider: TimelineProvider {
                     currentWeather: findCurrentWeather(from: weatherData),
                     bestTime: calculateBestTimes(from: weatherData)[0],
                     secondBestTime: calculateBestTimes(from: weatherData)[1],
+                    firstCrossing: getWeatherForTime(crossings.first.date, from: weatherData),
+                    secondCrossing: getWeatherForTime(crossings.second.date, from: weatherData),
+                    firstCrossingTime: crossings.first.date,
+                    secondCrossingTime: crossings.second.date,
                     imageData: imageData
                 )
                 
-                let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
+                let nextUpdate = Calendar.current.date(byAdding: .minute, value: 1, to: Date())!
                 completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
                 
                 // Force widget to reload after getting new data
@@ -168,16 +210,32 @@ struct Provider: TimelineProvider {
         }
     }
     
-    private func createEntry(from cachedData: CachedWeatherData) -> WeatherEntry {
+    private func createEntry(from cachedData: CachedWeatherData, firstCrossingTime: Date, secondCrossingTime: Date) -> WeatherEntry {
         // Only take what we need - last 24 hours of data
-        let recentData = Array(cachedData.weatherData.suffix(24))
+        let recentData = Array(cachedData.weatherData)  // Use all data, don't limit to last 24 hours
         let bestTimes = calculateBestTimes(from: recentData)
+        
+        // Find weather for crossing times
+        let firstCrossingWeather = getWeatherForTime(firstCrossingTime, from: recentData)
+        let secondCrossingWeather = getWeatherForTime(secondCrossingTime, from: recentData)
+        
+        logger.debug("🕒 Creating entry with crossings at \(formatTime(firstCrossingTime)) and \(formatTime(secondCrossingTime))")
+        if let first = firstCrossingWeather {
+            logger.debug("First crossing weather: \(first.temperature)°F, \(first.windSpeed)mph")
+        }
+        if let second = secondCrossingWeather {
+            logger.debug("Second crossing weather: \(second.temperature)°F, \(second.windSpeed)mph")
+        }
         
         return WeatherEntry(
             date: Date(),
             currentWeather: findCurrentWeather(from: recentData),
             bestTime: bestTimes[0],
             secondBestTime: bestTimes[1],
+            firstCrossing: firstCrossingWeather,
+            secondCrossing: secondCrossingWeather,
+            firstCrossingTime: firstCrossingTime,
+            secondCrossingTime: secondCrossingTime,
             imageData: cachedData.bridgeImage
         )
     }
@@ -246,6 +304,35 @@ struct Provider: TimelineProvider {
             abs(a.time.timeIntervalSince(now)) < abs(b.time.timeIntervalSince(now))
         }) ?? weatherData[0]
     }
+    
+    private func getWeatherForTime(_ time: Date, from weatherData: [WeatherData]) -> CrossingWeather? {
+        // Find the closest weather data point within 30 minutes of the target time
+        let closestData = weatherData.min(by: { a, b in
+            abs(a.time.timeIntervalSince(time)) < abs(b.time.timeIntervalSince(time))
+        })
+        
+        guard let weatherAtTime = closestData else {
+            logger.error("❌ No weather data found for time: \(time)")
+            return nil
+        }
+        
+        // Log the time difference for debugging
+        let timeDiff = abs(weatherAtTime.time.timeIntervalSince(time)) / 60 // Convert to minutes
+        logger.debug("✅ Found weather for \(formatTime(time)): temp=\(weatherAtTime.temperature)°F, wind=\(weatherAtTime.windSpeed)mph (time diff: \(Int(timeDiff)) minutes)")
+        
+        return CrossingWeather(
+            temperature: weatherAtTime.temperature,
+            windSpeed: weatherAtTime.windSpeed,
+            precipitationProbability: weatherAtTime.precipitationProbability
+        )
+    }
+    
+    private func formatTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm a"
+        formatter.timeZone = TimeZone(identifier: "America/Los_Angeles")
+        return formatter.string(from: date)
+    }
 }
 
 struct WeatherEntry: TimelineEntry {
@@ -253,6 +340,10 @@ struct WeatherEntry: TimelineEntry {
     let currentWeather: WeatherData
     let bestTime: BestVisitTime
     let secondBestTime: BestVisitTime
+    let firstCrossing: CrossingWeather?
+    let secondCrossing: CrossingWeather?
+    let firstCrossingTime: Date?
+    let secondCrossingTime: Date?
     let imageData: Data?
 }
 
@@ -467,6 +558,7 @@ struct GGBWidgetEntryView: View {
     private func formatTime(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
+        formatter.timeZone = TimeZone(identifier: "America/Los_Angeles")
         return formatter.string(from: date)
     }
 }
@@ -475,6 +567,7 @@ struct GGBWidgetEntryView: View {
 struct GGBWidget: WidgetBundle {
     var body: some Widget {
         SmallWeatherWidget()
+        MediumCrossingTimesWidget()
         MediumBestTimesWidget()
         MediumCurrentWeatherWidget()
         SmallBridgeWidget()
@@ -548,6 +641,20 @@ struct MediumBridgeWidget: Widget {
         }
         .configurationDisplayName("Bridge View (Medium)")
         .description("Shows just the bridge image in a larger format")
+        .supportedFamilies([.systemMedium])
+    }
+}
+
+// Medium Widget with Crossing Times
+struct MediumCrossingTimesWidget: Widget {
+    let kind: String = "MediumCrossingTimesWidget"
+    
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: Provider()) { entry in
+            mediumCrossingTimesWidget(entry: entry)
+        }
+        .configurationDisplayName("Crossing Times")
+        .description("Shows weather for your planned crossings")
         .supportedFamilies([.systemMedium])
     }
 }
@@ -690,6 +797,7 @@ private func mediumCurrentWeatherWidget(entry: Provider.Entry) -> some View {
 private func formatTime(_ date: Date) -> String {
     let formatter = DateFormatter()
     formatter.dateFormat = "h:mm a"
+    formatter.timeZone = TimeZone(identifier: "America/Los_Angeles")
     return formatter.string(from: date)
 }
 
@@ -722,4 +830,112 @@ private func mediumBridgeWidget(entry: Provider.Entry) -> some View {
                     .padding(.horizontal, -20)
             }
         }
+}
+
+// Add this view builder at the bottom of the file
+private func mediumCrossingTimesWidget(entry: Provider.Entry) -> some View {
+    VStack(spacing: 8) {
+        // Current Weather (Top)
+        VStack(spacing: 2) {
+            Text("Current Weather")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(.white)
+            
+            HStack(spacing: 12) {
+                Text("🌡️ \(entry.currentWeather.temperature, specifier: "%.1f")°F")
+                Text("💨 \(entry.currentWeather.windSpeed, specifier: "%.1f") mph")
+                Text("🌧 \(entry.currentWeather.precipitationProbability, specifier: "%.0f")%")
+            }
+            .font(.caption)
+            .foregroundColor(.white)
+        }
+        .frame(maxWidth: .infinity)
+        
+        // Crossing Times (Bottom)
+        HStack(spacing: 0) {
+            // First Crossing (Left)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Image(systemName: "sunrise.fill")
+                        .foregroundColor(.yellow)
+                    Text("First Crossing")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                        .bold()
+                }
+                
+                if let firstCrossing = entry.firstCrossing,
+                   let firstTime = entry.firstCrossingTime {
+                    Text(formatTime(firstTime))
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.white)
+                    
+                    Text("\(firstCrossing.temperature, specifier: "🌡️ %.1f")°F")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                    
+                    Text("\(firstCrossing.windSpeed, specifier: "💨 %.1f") mph")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                    
+                    Text("\(firstCrossing.precipitationProbability, specifier: "🌧️ %.0f")%")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                } else {
+                    Text("No Data")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.gray)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            
+            // Second Crossing (Right)
+            VStack(alignment: .trailing, spacing: 4) {
+                HStack {
+                    Text("Second Crossing")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                        .bold()
+                    Image(systemName: "sunset.fill")
+                        .foregroundColor(.orange)
+                }
+                
+                if let secondCrossing = entry.secondCrossing,
+                   let secondTime = entry.secondCrossingTime {
+                    Text(formatTime(secondTime))
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.white)
+                    
+                    Text("\(secondCrossing.temperature, specifier: "%.1f")°F 🌡️")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                    
+                    Text("\(secondCrossing.windSpeed, specifier: "%.1f") mph 💨")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                    
+                    Text("\(secondCrossing.precipitationProbability, specifier: "%.0f")% 🌧️")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                } else {
+                    Text("No Data")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.gray)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+    }
+    .padding(.horizontal, 16)
+    .padding(.vertical, 12)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+    .containerBackground(for: .widget) {
+        if let imageData = entry.imageData,
+           let uiImage = UIImage(data: imageData) {
+            Image(uiImage: uiImage)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .padding(.horizontal, -20)
+        }
+    }
 }
