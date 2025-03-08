@@ -17,7 +17,7 @@ public final class SharedDataInteractor: SharedDataInteractorProtocol {
     private var cachedContainers: [URL]?
     
     public init() {
-        self.sharedDefaults = UserDefaults(suiteName: appGroupIdentifier)
+        self.sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) ?? UserDefaults.standard
         logger.notice("🔧 Initializing SharedDataInteractor...")
         
         // Debug app group access
@@ -79,6 +79,12 @@ public final class SharedDataInteractor: SharedDataInteractorProtocol {
         if !savedSuccessfully {
             throw SharedDataError.saveFailed
         }
+        
+        // Trigger widget refresh when new data is saved
+        #if os(iOS)
+        logger.notice("🔄 Triggering widget refresh")
+        WidgetCenter.shared.reloadAllTimelines()
+        #endif
     }
     
     @SharedDataActor
@@ -179,7 +185,7 @@ public final class SharedDataInteractor: SharedDataInteractorProtocol {
                         .deletingLastPathComponent() // DeviceID
                         .deletingLastPathComponent() // Devices
                     
-                    logger.notice("�� Simulator root: \(simulatorRoot.path)")
+                    logger.notice("🔍 Simulator root: \(simulatorRoot.path)")
                     
                     // Look for app group containers in all simulator devices
                     if let deviceDirs = try? fileManager.contentsOfDirectory(at: simulatorRoot, includingPropertiesForKeys: nil) {

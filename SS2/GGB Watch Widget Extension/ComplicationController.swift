@@ -1,10 +1,12 @@
 import ClockKit
 import SwiftUI
 import WidgetKit
+import os
 
 class ComplicationController: NSObject, CLKComplicationDataSource {
     private let dataInteractor = SharedDataInteractor()
     private var cachedWeatherData: CachedWeatherData?
+    private let logger = Logger(subsystem: "generouscorp.ggb", category: "ComplicationController")
     
     override init() {
         super.init()
@@ -35,33 +37,39 @@ class ComplicationController: NSObject, CLKComplicationDataSource {
     }
     
     private func createTemplate(for complication: CLKComplication) -> CLKComplicationTemplate? {
-        // Get first weather data item from cache
-        guard let weatherData = cachedWeatherData?.weatherData.first else { 
-            return nil 
+        guard let weatherData = cachedWeatherData?.weatherData.first else {
+            logger.error("❌ No weather data available for complication")
+            return nil
         }
+        
+        let widgetWeatherData: WeatherWidgetEntry.WeatherData = .init(
+            time: weatherData.time,
+            temperature: weatherData.temperature,
+            cloudCover: weatherData.cloudCover,
+            windSpeed: weatherData.windSpeed,
+            precipitationProbability: weatherData.precipitationProbability
+        )
+        
+        let entry = WeatherWidgetEntry(
+            date: Date(),
+            weatherData: widgetWeatherData,
+            error: nil as String?,
+            bridgeImage: cachedWeatherData?.bridgeImage as Data?
+        )
         
         switch complication.family {
         case .graphicCircular:
             return CLKComplicationTemplateGraphicCircularView(
-                GGB_Watch_Widget_ExtensionEntryView(entry: WeatherWidgetEntry(
-                    date: Date(),
-                    weatherData: weatherData,
-                    error: nil,
-                    bridgeImage: cachedWeatherData?.bridgeImage
-                ))
+                WidgetView(entry: entry)
             )
             
         case .graphicRectangular:
             return CLKComplicationTemplateGraphicRectangularFullView(
-                GGB_Watch_Widget_ExtensionEntryView(entry: WeatherWidgetEntry(
-                    date: Date(),
-                    weatherData: weatherData,
-                    error: nil,
-                    bridgeImage: cachedWeatherData?.bridgeImage
-                ))
+                WidgetView(entry: entry)
             )
             
         default:
+            logger.notice("⚠️ Unsupported complication family: \(String(describing: complication.family))")
             return nil
         }
     }

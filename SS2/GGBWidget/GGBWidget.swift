@@ -10,7 +10,7 @@ import SwiftUI
 import os
 import Shared
 
-private let logger = Logger(subsystem: "com.danielraffel.ggbweather", category: "GGBWidget")
+private let logger = Logger(subsystem: "generouscorp.ggb", category: "GGBWidget")
 
 struct Provider: TimelineProvider {
     private let sharedDataInteractor = SharedDataInteractor()
@@ -18,7 +18,7 @@ struct Provider: TimelineProvider {
     
     init() {
         // Use the shared app group UserDefaults
-        let defaults = UserDefaults(suiteName: "group.com.danielraffel.ggbweather") ?? .standard
+        let defaults = UserDefaults(suiteName: "group.genco") ?? .standard
         self.crossingTimeInteractor = Shared.CrossingTimeInteractor(defaults: defaults)
     }
     
@@ -416,7 +416,7 @@ struct GGBWidgetEntryView: View {
                         )
                     )
             } else {
-                Color.black.opacity(0.8)
+            Color.black.opacity(0.8)
             }
         }
     }
@@ -565,95 +565,122 @@ struct GGBWidgetEntryView: View {
 
 @main
 struct GGBWidget: WidgetBundle {
+    init() {
+        logger.notice("🚀 Widget bundle initializing on \(ProcessInfo.processInfo.environment["SIMULATOR_DEVICE_NAME"] != nil ? "Simulator" : "Physical Device")")
+        logger.notice("📝 App group identifier: group.genco")
+        logger.notice("📦 Bundle ID: \(Bundle.main.bundleIdentifier ?? "unknown")")
+        
+        // Check if we can access UserDefaults
+        if UserDefaults(suiteName: "group.genco") != nil {
+            logger.notice("✅ Successfully created UserDefaults for app group")
+        } else {
+            logger.notice("❌ Failed to create UserDefaults for app group")
+        }
+        
+        // Check if we can access the app group container
+        if let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.genco") {
+            logger.notice("📂 Found app group container: \(containerURL.path)")
+            
+            // Check for cache files
+            let cachesPath = containerURL.appendingPathComponent("Library/Caches/weatherCache.json")
+            let prefsPath = containerURL.appendingPathComponent("Library/Preferences/weatherCache.json")
+            
+            logger.notice("📄 Cache file exists in Caches: \(FileManager.default.fileExists(atPath: cachesPath.path))")
+            logger.notice("📄 Cache file exists in Preferences: \(FileManager.default.fileExists(atPath: prefsPath.path))")
+        } else {
+            logger.notice("❌ Could not access app group container")
+        }
+    }
+    
     var body: some Widget {
-        SmallWeatherWidget()
-        MediumCrossingTimesWidget()
-        MediumBestTimesWidget()
-        MediumCurrentWeatherWidget()
-        SmallBridgeWidget()
-        MediumBridgeWidget()
+        GGBCurrentWeatherWidget()
+        GGBCrossingTimesWidget()
+        GGBBestTimesWidget()
+        GGBCurrentWeatherLargeWidget()
+        GGBBridgeSmallWidget()
+        GGBBridgeMediumWidget()
     }
 }
 
 // Small Widget
-struct SmallWeatherWidget: Widget {
-    let kind: String = "SmallWeatherWidget"
+struct GGBCurrentWeatherWidget: Widget {
+    let kind: String = "com.danielraffel.ggbweather.currentweather"
     
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             GGBWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("Current Weather")
-        .description("Shows current weather at the bridge")
+        .configurationDisplayName("Golden Gate Weather")
+        .description("Shows current weather at the Golden Gate Bridge")
         .supportedFamilies([.systemSmall])
     }
 }
 
 // Medium Widget with Best Times
-struct MediumBestTimesWidget: Widget {
-    let kind: String = "MediumBestTimesWidget"
+struct GGBBestTimesWidget: Widget {
+    let kind: String = "com.danielraffel.ggbweather.besttimes"
     
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             mediumWidget(entry: entry)
         }
-        .configurationDisplayName("Best Times")
-        .description("Shows best times to visit and current weather")
+        .configurationDisplayName("Golden Gate Best Times")
+        .description("Shows best times to visit the Golden Gate Bridge")
         .supportedFamilies([.systemMedium])
     }
 }
 
 // Medium Widget with Current Weather Only
-struct MediumCurrentWeatherWidget: Widget {
-    let kind: String = "MediumCurrentWeatherWidget"
+struct GGBCurrentWeatherLargeWidget: Widget {
+    let kind: String = "com.danielraffel.ggbweather.currentweatherlarge"
     
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             mediumCurrentWeatherWidget(entry: entry)
         }
-        .configurationDisplayName("Current Weather (Large)")
+        .configurationDisplayName("Golden Gate Weather (Large)")
         .description("Shows current weather in a larger format")
         .supportedFamilies([.systemMedium])
     }
 }
 
 // Small Bridge Widget (Image Only)
-struct SmallBridgeWidget: Widget {
-    let kind: String = "SmallBridgeWidget"
+struct GGBBridgeSmallWidget: Widget {
+    let kind: String = "com.danielraffel.ggbweather.bridgesmall"
     
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             smallBridgeWidget(entry: entry)
         }
-        .configurationDisplayName("Bridge View (Small)")
+        .configurationDisplayName("Golden Gate Bridge (Small)")
         .description("Shows just the bridge image")
         .supportedFamilies([.systemSmall])
     }
 }
 
 // Medium Bridge Widget (Image Only)
-struct MediumBridgeWidget: Widget {
-    let kind: String = "MediumBridgeWidget"
+struct GGBBridgeMediumWidget: Widget {
+    let kind: String = "com.danielraffel.ggbweather.bridgemedium"
     
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             mediumBridgeWidget(entry: entry)
         }
-        .configurationDisplayName("Bridge View (Medium)")
+        .configurationDisplayName("Golden Gate Bridge (Medium)")
         .description("Shows just the bridge image in a larger format")
         .supportedFamilies([.systemMedium])
     }
 }
 
 // Medium Widget with Crossing Times
-struct MediumCrossingTimesWidget: Widget {
-    let kind: String = "MediumCrossingTimesWidget"
+struct GGBCrossingTimesWidget: Widget {
+    let kind: String = "com.danielraffel.ggbweather.crossingtimes"
     
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             mediumCrossingTimesWidget(entry: entry)
         }
-        .configurationDisplayName("Crossing Times")
+        .configurationDisplayName("Golden Gate Crossing Times")
         .description("Shows weather for your planned crossings")
         .supportedFamilies([.systemMedium])
     }

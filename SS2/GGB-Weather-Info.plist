@@ -11,5 +11,14 @@
 		<string>fetch</string>
 		<string>processing</string>
 	</array>
+	<key>WKBackgroundModes</key>
+	<array>
+		<string>mindfulness</string>
+		<string>workout-processing</string>
+	</array>
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.genco</string>
+	</array>
 </dict>
 </plist>

@@ -1,0 +1,7 @@
+Bundle IDs and entitlements files
+main app: generouscorp.ggb @GGB Weather.entitlements 
+Widget: generouscorp.ggb.GGBWidget @GGBWidgetExtension.entitlements 
+Watch App: generouscorp.ggb.watchkitapp @GGB Watch App Watch App.entitlements 
+Watch extension: generouscorp.ggb.watchkitapp.GGB-Watch-Widget-Extension @GGB Watch Widget Extension.entitlements 
+
+AppGroup: group.genco

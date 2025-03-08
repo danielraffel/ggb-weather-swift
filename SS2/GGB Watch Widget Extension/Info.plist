@@ -30,11 +30,15 @@
 	<array>
 		<string>ConfigurationAppIntent</string>
 	</array>
+	<key>Privacy - Network Usage Description</key>
+	<string>Fetches weather data and bridge image</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
 	</array>
-	<key>Privacy - Network Usage Description</key>
-	<string>Fetches weather data and bridge image</string>
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.genco</string>
+	</array>
 </dict>
 </plist>
