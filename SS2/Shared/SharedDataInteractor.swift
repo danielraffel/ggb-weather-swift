@@ -11,7 +11,7 @@ public protocol SharedDataInteractorProtocol {
 public final class SharedDataInteractor: SharedDataInteractorProtocol {
     private let fileManager = FileManager.default
     private let logger = Logger(subsystem: "generouscorp.ggb", category: "SharedDataInteractor")
-    private let maxCacheAge: TimeInterval = 15 * 60 // 15 minutes
+    private let maxCacheAge: TimeInterval = 24 * 60 * 60 // 24 hours instead of 15 minutes
     private let appGroupIdentifier = "group.genco"
     private let sharedDefaults: UserDefaults?
     private var cachedContainers: [URL]?
@@ -46,6 +46,37 @@ public final class SharedDataInteractor: SharedDataInteractorProtocol {
         var savedSuccessfully = false
         let isSimulator = ProcessInfo.processInfo.environment["SIMULATOR_DEVICE_NAME"] != nil
         
+        // First, try to save to the specific container we know works
+        let knownContainerUUID = "29054354-0907-4329-9C6A-84716EB850D4"
+        let directContainerPath = "/private/var/mobile/Containers/Shared/AppGroup/\(knownContainerUUID)"
+        
+        if FileManager.default.fileExists(atPath: directContainerPath) {
+            logger.notice("🎯 Directly targeting known container: \(knownContainerUUID)")
+            
+            // Save to both Preferences and Caches directories
+            let prefsDir = URL(fileURLWithPath: "\(directContainerPath)/Library/Preferences")
+            let cachesDir = URL(fileURLWithPath: "\(directContainerPath)/Library/Caches")
+            let savePaths = [
+                prefsDir.appendingPathComponent("weatherCache.json"),
+                cachesDir.appendingPathComponent("weatherCache.json")
+            ]
+            
+            for savePath in savePaths {
+                do {
+                    try fileManager.createDirectory(at: savePath.deletingLastPathComponent(), withIntermediateDirectories: true)
+                    try encodedData.write(to: savePath, options: .atomic)
+                    
+                    if let size = try? savePath.resourceValues(forKeys: [.fileSizeKey]).fileSize {
+                        logger.notice("✅ Successfully saved weather data to \(savePath.path). Items: \(data.weatherData.count), Size: \(size) bytes")
+                        savedSuccessfully = true
+                    }
+                } catch {
+                    logger.error("❌ Failed to save to direct path at \(savePath.path): \(error)")
+                }
+            }
+        }
+        
+        // Then try the standard approach with all containers
         for containerURL in getContainerURLs() {
             // Save to both Preferences and Caches directories
             let prefsDir = containerURL.appendingPathComponent("Library/Preferences")
@@ -80,11 +111,32 @@ public final class SharedDataInteractor: SharedDataInteractorProtocol {
             throw SharedDataError.saveFailed
         }
         
+        // Also save to UserDefaults for redundancy
+        if let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) {
+            sharedDefaults.set(encodedData, forKey: "weatherData")
+            sharedDefaults.set(encodedData, forKey: "cachedWeatherData")
+            sharedDefaults.synchronize()
+            logger.notice("✅ Saved to UserDefaults")
+        }
+        
         // Trigger widget refresh when new data is saved
-        #if os(iOS)
         logger.notice("🔄 Triggering widget refresh")
         WidgetCenter.shared.reloadAllTimelines()
-        #endif
+        
+        // Add a delay and refresh again to ensure widget picks up the changes
+        try await Task.sleep(nanoseconds: 500_000_000) // 0.5 second
+        WidgetCenter.shared.reloadAllTimelines()
+        logger.notice("🔄 Triggered second widget refresh after 0.5s delay")
+        
+        // Add a third refresh after a longer delay
+        try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+        WidgetCenter.shared.reloadAllTimelines()
+        logger.notice("🔄 Triggered third widget refresh after 1.5s total delay")
+        
+        // Add a fourth refresh after an even longer delay
+        try await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+        WidgetCenter.shared.reloadAllTimelines()
+        logger.notice("🔄 Triggered fourth widget refresh after 3.5s total delay")
     }
     
     @SharedDataActor
@@ -128,6 +180,46 @@ public final class SharedDataInteractor: SharedDataInteractorProtocol {
     private func loadFromFileCache() async throws -> CachedWeatherData? {
         logger.notice("📂 Attempting to load weather data...")
         
+        var newestCachedData: CachedWeatherData? = nil
+        var newestCachedDataPath: String? = nil
+        var newestTimestamp: Date? = nil
+        
+        // First try the known container directly
+        let knownContainerUUID = "29054354-0907-4329-9C6A-84716EB850D4"
+        let directContainerPath = "/private/var/mobile/Containers/Shared/AppGroup/\(knownContainerUUID)"
+        
+        if fileManager.fileExists(atPath: directContainerPath) {
+            logger.notice("🎯 Directly checking known container for cache: \(knownContainerUUID)")
+            
+            let prefsPath = "\(directContainerPath)/Library/Preferences/weatherCache.json"
+            let cachesPath = "\(directContainerPath)/Library/Caches/weatherCache.json"
+            
+            for path in [prefsPath, cachesPath] {
+                if fileManager.fileExists(atPath: path),
+                   let data = try? Data(contentsOf: URL(fileURLWithPath: path)),
+                   let cachedData = try? JSONDecoder().decode(CachedWeatherData.self, from: data) {
+                    
+                    let age = Date().timeIntervalSince(cachedData.timestamp)
+                    logger.notice("📊 Found cache at \(path), age: \(Int(age)) seconds")
+                    
+                    // Check if this is newer than what we've found so far
+                    if newestTimestamp == nil || cachedData.timestamp > newestTimestamp! {
+                        newestCachedData = cachedData
+                        newestCachedDataPath = path
+                        newestTimestamp = cachedData.timestamp
+                        logger.notice("⏱️ This is the newest cache so far")
+                    }
+                    
+                    // If it's fresh enough, return it immediately
+                    if age <= maxCacheAge {
+                        logger.notice("✅ Found valid fresh cache at: \(path)")
+                        return cachedData
+                    }
+                }
+            }
+        }
+        
+        // Then check all containers
         for containerURL in getContainerURLs() {
             // Try both Preferences and Caches directories
             let prefsURL = containerURL.appendingPathComponent("Library/Preferences")
@@ -143,14 +235,32 @@ public final class SharedDataInteractor: SharedDataInteractorProtocol {
                    let cachedData = try? JSONDecoder().decode(CachedWeatherData.self, from: data) {
                     
                     let age = Date().timeIntervalSince(cachedData.timestamp)
+                    logger.notice("📊 Found cache at \(cacheFile.path), age: \(Int(age)) seconds")
+                    
+                    // Check if this is newer than what we've found so far
+                    if newestTimestamp == nil || cachedData.timestamp > newestTimestamp! {
+                        newestCachedData = cachedData
+                        newestCachedDataPath = cacheFile.path
+                        newestTimestamp = cachedData.timestamp
+                        logger.notice("⏱️ This is the newest cache so far")
+                    }
+                    
+                    // If it's fresh enough, return it immediately
                     if age <= maxCacheAge {
-                        logger.notice("✅ Found valid cache at: \(cacheFile.path)")
+                        logger.notice("✅ Found valid fresh cache at: \(cacheFile.path)")
                         return cachedData
                     } else {
                         logger.notice("⚠️ Cache expired at: \(cacheFile.path)")
                     }
                 }
             }
+        }
+        
+        // If we didn't find any fresh cache but found an expired one, use the newest expired cache
+        if let cachedData = newestCachedData, let path = newestCachedDataPath {
+            let age = Date().timeIntervalSince(cachedData.timestamp)
+            logger.notice("⚠️ Using expired cache from \(path) (age: \(Int(age)) seconds) as no fresh cache was found")
+            return cachedData
         }
         
         logger.error("❌ No data found in shared cache")

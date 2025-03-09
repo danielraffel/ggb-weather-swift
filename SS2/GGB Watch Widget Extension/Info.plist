@@ -9,27 +9,19 @@
 	</dict>
 	<key>NSExtension</key>
 	<dict>
-		<key>CLKComplicationPrincipalClass</key>
-		<string>$(PRODUCT_MODULE_NAME).ComplicationController</string>
-		<key>CLKComplicationSupportedFamilies</key>
-		<array>
-			<string>CLKComplicationFamilyCircularSmall</string>
-			<string>CLKComplicationFamilyModularSmall</string>
-			<string>CLKComplicationFamilyUtilitarianSmall</string>
-			<string>CLKComplicationFamilyExtraLarge</string>
-			<string>CLKComplicationFamilyGraphicCircular</string>
-			<string>CLKComplicationFamilyGraphicRectangular</string>
-			<string>CLKComplicationFamilyGraphicCorner</string>
-		</array>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.widgetkit-extension</string>
-		<key>WKWatchOnly</key>
-		<true/>
 	</dict>
 	<key>NSUserActivityTypes</key>
 	<array>
 		<string>ConfigurationAppIntent</string>
+		<string>RefreshWidgetIntent</string>
 	</array>
+	<key>NSExtensionAttributes</key>
+	<dict>
+		<key>WKAppBundleIdentifier</key>
+		<string>generouscorp.ggb.watchkitapp</string>
+	</dict>
 	<key>Privacy - Network Usage Description</key>
 	<string>Fetches weather data and bridge image</string>
 	<key>UIBackgroundModes</key>

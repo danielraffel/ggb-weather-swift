@@ -223,7 +223,15 @@ class WatchSessionDelegate: NSObject, ObservableObject, WCSessionDelegate {
                 try await sharedDataInteractor.saveWeatherData(newData)
                 logger.notice("✅ Saved complete weather data with \(decodedData.weatherData.count) items")
                 logger.notice("  • Bridge image preserved: \(existingData?.bridgeImage != nil)")
+                
+                // Force widget refresh
                 WidgetCenter.shared.reloadAllTimelines()
+                logger.notice("🔄 Forced widget refresh after saving new data")
+                
+                // Add a delay and refresh again to ensure widget picks up the changes
+                try await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+                WidgetCenter.shared.reloadAllTimelines()
+                logger.notice("🔄 Forced second widget refresh after delay")
             } catch {
                 logger.error("❌ Failed to process complete data: \(error)")
                 logger.error("  • Error details: \(String(describing: error))")
